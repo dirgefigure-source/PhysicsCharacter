@@ -1,0 +1,559 @@
+fileFormatVersion: 2
+guid: 8d9994a16dbf562469b17e6d0ee32958
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1027777616454472800
+    second: Human_female_heads_0
+  - first:
+      213: -4059639885274786616
+    second: Human_female_heads_1
+  - first:
+      213: -4105184029249101802
+    second: Human_female_heads_2
+  - first:
+      213: 2909024739418303927
+    second: Human_female_heads_3
+  - first:
+      213: -5936439498313889379
+    second: Human_female_heads_4
+  - first:
+      213: -8551740135608805908
+    second: Human_female_heads_5
+  - first:
+      213: 8308968285180628977
+    second: Human_female_heads_6
+  - first:
+      213: -2185503280071372712
+    second: Human_female_heads_7
+  - first:
+      213: -8940319976212941299
+    second: Human_female_heads_8
+  - first:
+      213: -7213805836796517569
+    second: Human_female_heads_9
+  - first:
+      213: 353029900567234716
+    second: Human_female_heads_10
+  - first:
+      213: 5734473311257673161
+    second: Human_female_heads_11
+  - first:
+      213: 134618697391846407
+    second: Human_female_heads_12
+  - first:
+      213: 962027055169978777
+    second: Human_female_heads_13
+  - first:
+      213: 6508205528505451882
+    second: Human_female_heads_14
+  - first:
+      213: -7953686379128422748
+    second: Human_female_heads_15
+  - first:
+      213: -4974278279246678086
+    second: Human_female_heads_16
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Human_female_heads_0
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 399
+        width: 88
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 064ddd8fb46634e00800000000000000
+      internalID: 1027777616454472800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_1
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 399
+        width: 93
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c45032880349a7c0800000000000000
+      internalID: -4059639885274786616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_2
+      rect:
+        serializedVersion: 2
+        x: 274
+        y: 399
+        width: 88
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 610200720e47707c0800000000000000
+      internalID: -4105184029249101802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_3
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 399
+        width: 90
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7bde9db769eee5820800000000000000
+      internalID: 2909024739418303927
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_4
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 273
+        width: 89
+        height: 97
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9907689ab78d9da0800000000000000
+      internalID: -5936439498313889379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_5
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 266
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce5169dd7ad125980800000000000000
+      internalID: -8551740135608805908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_6
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 271
+        width: 90
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ff8d20f1a26f4370800000000000000
+      internalID: 8308968285180628977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_7
+      rect:
+        serializedVersion: 2
+        x: 274
+        y: 271
+        width: 89
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85015e798588ba1e0800000000000000
+      internalID: -2185503280071372712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_8
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 271
+        width: 90
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d06bf77795a9de380800000000000000
+      internalID: -8940319976212941299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_9
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 143
+        width: 90
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f33aa13dfc963eb90800000000000000
+      internalID: -7213805836796517569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_10
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 143
+        width: 88
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c98c66af2d636e400800000000000000
+      internalID: 353029900567234716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_11
+      rect:
+        serializedVersion: 2
+        x: 274
+        y: 143
+        width: 91
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cdb8731811f49f40800000000000000
+      internalID: 5734473311257673161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_12
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 143
+        width: 90
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 704ba26fdf24ed100800000000000000
+      internalID: 134618697391846407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_13
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 15
+        width: 91
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 991c8b7728ec95d00800000000000000
+      internalID: 962027055169978777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_14
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 15
+        width: 88
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a650dcb327ac15a50800000000000000
+      internalID: 6508205528505451882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_15
+      rect:
+        serializedVersion: 2
+        x: 274
+        y: 15
+        width: 91
+        height: 98
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4aeff2de064de9190800000000000000
+      internalID: -7953686379128422748
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Human_female_heads_16
+      rect:
+        serializedVersion: 2
+        x: 403
+        y: 15
+        width: 87
+        height: 99
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab77f878240d7fab0800000000000000
+      internalID: -4974278279246678086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Human_female_heads_0: 1027777616454472800
+      Human_female_heads_1: -4059639885274786616
+      Human_female_heads_10: 353029900567234716
+      Human_female_heads_11: 5734473311257673161
+      Human_female_heads_12: 134618697391846407
+      Human_female_heads_13: 962027055169978777
+      Human_female_heads_14: 6508205528505451882
+      Human_female_heads_15: -7953686379128422748
+      Human_female_heads_16: -4974278279246678086
+      Human_female_heads_2: -4105184029249101802
+      Human_female_heads_3: 2909024739418303927
+      Human_female_heads_4: -5936439498313889379
+      Human_female_heads_5: -8551740135608805908
+      Human_female_heads_6: 8308968285180628977
+      Human_female_heads_7: -2185503280071372712
+      Human_female_heads_8: -8940319976212941299
+      Human_female_heads_9: -7213805836796517569
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

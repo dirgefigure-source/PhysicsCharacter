@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags: []
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - BodyPart
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: character
+    uniqueID: 3865135961
+    locked: 0
+  - name: Background
+    uniqueID: 1678359635
+    locked: 0
+  - name: BackBody
+    uniqueID: 532065463
+    locked: 0
+  - name: Body
+    uniqueID: 915091221
+    locked: 0
+  - name: FrontBody
+    uniqueID: 3991600341
+    locked: 0
+  - name: Weapon
+    uniqueID: 3911473567
+    locked: 0
+  - name: Effects
+    uniqueID: 1906994539
+    locked: 0
+  m_RenderingLayers:
+  - Default
