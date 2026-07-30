@@ -1,6 +1,558 @@
 {
     "objects": [
         {
+            "name": "Hip",
+            "active": true,
+            "parent": "Body",
+            "components": [
+                {
+                    "type": "UnityEngine.Transform",
+                    "properties": [
+                        {
+                            "name": "m_LocalRotation",
+                            "value": "(0.00000, 0.00000, 0.00000, 1.00000)"
+                        },
+                        {
+                            "name": "m_LocalPosition",
+                            "value": "(-0.03, -0.70, 0.00)"
+                        },
+                        {
+                            "name": "m_LocalScale",
+                            "value": "(1.00, 1.00, 1.00)"
+                        },
+                        {
+                            "name": "m_ConstrainProportionsScale",
+                            "value": "False"
+                        }
+                    ]
+                },
+                {
+                    "type": "UnityEngine.SpriteRenderer",
+                    "properties": [
+                        {
+                            "name": "m_CastShadows",
+                            "value": "Off"
+                        },
+                        {
+                            "name": "m_ReceiveShadows",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_DynamicOccludee",
+                            "value": "True"
+                        },
+                        {
+                            "name": "m_StaticShadowCaster",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_MotionVectors",
+                            "value": "Per Object Motion"
+                        },
+                        {
+                            "name": "m_LightProbeUsage",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_ReflectionProbeUsage",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_RayTracingMode",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_RayTraceProcedural",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_RayTracingAccelStructBuildFlagsOverride",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_RayTracingAccelStructBuildFlags",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_SmallMeshCulling",
+                            "value": "True"
+                        },
+                        {
+                            "name": "m_ForceMeshLod",
+                            "value": "-1"
+                        },
+                        {
+                            "name": "m_MeshLodSelectionBias",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_RenderingLayerMask",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_RendererPriority",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_Materials",
+                            "value": "[Generic]"
+                        },
+                        {
+                            "name": "m_Materials[0]",
+                            "value": "Resources/unity_builtin_extra"
+                        },
+                        {
+                            "name": "m_ProbeAnchor",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_LightProbeVolumeOverride",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_ScaleInLightmap",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_ReceiveGI",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_PreserveUVs",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_IgnoreNormalsForChartDetection",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_ImportantGI",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_StitchLightmapSeams",
+                            "value": "True"
+                        },
+                        {
+                            "name": "m_MinimumChartSize",
+                            "value": "4"
+                        },
+                        {
+                            "name": "m_AutoUVMaxDistance",
+                            "value": "0.5"
+                        },
+                        {
+                            "name": "m_AutoUVMaxAngle",
+                            "value": "89"
+                        },
+                        {
+                            "name": "m_LightmapParameters",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_MaskInteraction",
+                            "value": "None"
+                        },
+                        {
+                            "name": "m_Sprite",
+                            "value": "Assets/Character/Human_female.png"
+                        },
+                        {
+                            "name": "m_Color",
+                            "value": "RGBA(1.000, 1.000, 1.000, 1.000)"
+                        },
+                        {
+                            "name": "m_FlipX",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_FlipY",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_DrawMode",
+                            "value": "Simple"
+                        },
+                        {
+                            "name": "m_Size",
+                            "value": "(0.51, 0.51)"
+                        },
+                        {
+                            "name": "m_AdaptiveModeThreshold",
+                            "value": "0.5"
+                        },
+                        {
+                            "name": "m_SpriteTileMode",
+                            "value": "Continuous"
+                        },
+                        {
+                            "name": "m_SpriteSortPoint",
+                            "value": "Center"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Torso",
+            "active": true,
+            "parent": "Body",
+            "components": [
+                {
+                    "type": "UnityEngine.Transform",
+                    "properties": [
+                        {
+                            "name": "m_LocalRotation",
+                            "value": "(0.00000, 0.00000, 0.00000, 1.00000)"
+                        },
+                        {
+                            "name": "m_LocalPosition",
+                            "value": "(0.00, 0.00, 0.00)"
+                        },
+                        {
+                            "name": "m_LocalScale",
+                            "value": "(1.00, 1.00, 1.00)"
+                        },
+                        {
+                            "name": "m_ConstrainProportionsScale",
+                            "value": "False"
+                        }
+                    ]
+                },
+                {
+                    "type": "UnityEngine.SpriteRenderer",
+                    "properties": [
+                        {
+                            "name": "m_CastShadows",
+                            "value": "Off"
+                        },
+                        {
+                            "name": "m_ReceiveShadows",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_DynamicOccludee",
+                            "value": "True"
+                        },
+                        {
+                            "name": "m_StaticShadowCaster",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_MotionVectors",
+                            "value": "Per Object Motion"
+                        },
+                        {
+                            "name": "m_LightProbeUsage",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_ReflectionProbeUsage",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_RayTracingMode",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_RayTraceProcedural",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_RayTracingAccelStructBuildFlagsOverride",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_RayTracingAccelStructBuildFlags",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_SmallMeshCulling",
+                            "value": "True"
+                        },
+                        {
+                            "name": "m_ForceMeshLod",
+                            "value": "-1"
+                        },
+                        {
+                            "name": "m_MeshLodSelectionBias",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_RenderingLayerMask",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_RendererPriority",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_Materials",
+                            "value": "[Generic]"
+                        },
+                        {
+                            "name": "m_Materials[0]",
+                            "value": "Resources/unity_builtin_extra"
+                        },
+                        {
+                            "name": "m_ProbeAnchor",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_LightProbeVolumeOverride",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_ScaleInLightmap",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_ReceiveGI",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_PreserveUVs",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_IgnoreNormalsForChartDetection",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_ImportantGI",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_StitchLightmapSeams",
+                            "value": "True"
+                        },
+                        {
+                            "name": "m_MinimumChartSize",
+                            "value": "4"
+                        },
+                        {
+                            "name": "m_AutoUVMaxDistance",
+                            "value": "0.5"
+                        },
+                        {
+                            "name": "m_AutoUVMaxAngle",
+                            "value": "89"
+                        },
+                        {
+                            "name": "m_LightmapParameters",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_MaskInteraction",
+                            "value": "None"
+                        },
+                        {
+                            "name": "m_Sprite",
+                            "value": "Assets/Character/Human_female.png"
+                        },
+                        {
+                            "name": "m_Color",
+                            "value": "RGBA(1.000, 1.000, 1.000, 1.000)"
+                        },
+                        {
+                            "name": "m_FlipX",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_FlipY",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_DrawMode",
+                            "value": "Simple"
+                        },
+                        {
+                            "name": "m_Size",
+                            "value": "(0.56, 1.34)"
+                        },
+                        {
+                            "name": "m_AdaptiveModeThreshold",
+                            "value": "0.5"
+                        },
+                        {
+                            "name": "m_SpriteTileMode",
+                            "value": "Continuous"
+                        },
+                        {
+                            "name": "m_SpriteSortPoint",
+                            "value": "Center"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Body",
+            "active": true,
+            "parent": "Physics",
+            "components": [
+                {
+                    "type": "UnityEngine.Transform",
+                    "properties": [
+                        {
+                            "name": "m_LocalRotation",
+                            "value": "(0.00000, 0.00000, 0.00000, 1.00000)"
+                        },
+                        {
+                            "name": "m_LocalPosition",
+                            "value": "(0.01, 0.00, 0.00)"
+                        },
+                        {
+                            "name": "m_LocalScale",
+                            "value": "(1.00, 1.00, 1.00)"
+                        },
+                        {
+                            "name": "m_ConstrainProportionsScale",
+                            "value": "False"
+                        }
+                    ]
+                },
+                {
+                    "type": "UnityEngine.BoxCollider2D",
+                    "properties": [
+                        {
+                            "name": "m_Density",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_Material",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_IncludeLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_ExcludeLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_LayerOverridePriority",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_ForceSendLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_ForceReceiveLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_ContactCaptureLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_CallbackLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_IsTrigger",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_UsedByEffector",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_CompositeOperation",
+                            "value": "None"
+                        },
+                        {
+                            "name": "m_CompositeOrder",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_Offset",
+                            "value": "(0.00, -0.27)"
+                        },
+                        {
+                            "name": "m_AutoTiling",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_Size",
+                            "value": "(0.58, 1.39)"
+                        },
+                        {
+                            "name": "m_EdgeRadius",
+                            "value": "0"
+                        }
+                    ]
+                },
+                {
+                    "type": "UnityEngine.Rigidbody2D",
+                    "properties": [
+                        {
+                            "name": "m_BodyType",
+                            "value": "Dynamic"
+                        },
+                        {
+                            "name": "m_Simulated",
+                            "value": "True"
+                        },
+                        {
+                            "name": "m_UseFullKinematicContacts",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_UseAutoMass",
+                            "value": "False"
+                        },
+                        {
+                            "name": "m_Mass",
+                            "value": "5"
+                        },
+                        {
+                            "name": "m_LinearDamping",
+                            "value": "0"
+                        },
+                        {
+                            "name": "m_AngularDamping",
+                            "value": "0.05"
+                        },
+                        {
+                            "name": "m_GravityScale",
+                            "value": "1"
+                        },
+                        {
+                            "name": "m_Material",
+                            "value": "null"
+                        },
+                        {
+                            "name": "m_IncludeLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_ExcludeLayers",
+                            "value": "[LayerMask]"
+                        },
+                        {
+                            "name": "m_Interpolate",
+                            "value": "None"
+                        },
+                        {
+                            "name": "m_SleepingMode",
+                            "value": "Start Awake"
+                        },
+                        {
+                            "name": "m_CollisionDetection",
+                            "value": "Discrete"
+                        },
+                        {
+                            "name": "m_Constraints",
+                            "value": "0"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "name": "LeftUpperArm",
             "active": true,
             "parent": "Physics",
@@ -334,7 +886,7 @@
                         },
                         {
                             "name": "m_ConnectedRigidBody",
-                            "value": "Torso"
+                            "value": "Body"
                         },
                         {
                             "name": "m_AutoConfigureConnectedAnchor",
@@ -346,7 +898,7 @@
                         },
                         {
                             "name": "m_ConnectedAnchor",
-                            "value": "(-0.13, 0.17)"
+                            "value": "(-0.14, 0.17)"
                         },
                         {
                             "name": "m_UseConnectedAnchor",
@@ -706,7 +1258,7 @@
                         },
                         {
                             "name": "m_ConnectedRigidBody",
-                            "value": "Hip"
+                            "value": "Body"
                         },
                         {
                             "name": "m_AutoConfigureConnectedAnchor",
@@ -718,7 +1270,7 @@
                         },
                         {
                             "name": "m_ConnectedAnchor",
-                            "value": "(0.00, -0.01)"
+                            "value": "(-0.03, -0.70)"
                         },
                         {
                             "name": "m_UseConnectedAnchor",
@@ -2379,7 +2931,7 @@
                         },
                         {
                             "name": "m_ConnectedRigidBody",
-                            "value": "Torso"
+                            "value": "Body"
                         },
                         {
                             "name": "m_AutoConfigureConnectedAnchor",
@@ -2391,7 +2943,7 @@
                         },
                         {
                             "name": "m_ConnectedAnchor",
-                            "value": "(-0.08, 0.54)"
+                            "value": "(-0.09, 0.54)"
                         },
                         {
                             "name": "m_UseConnectedAnchor",
@@ -3327,6 +3879,67 @@
                             "value": "null"
                         }
                     ]
+                },
+                {
+                    "type": "CenterOfMassDebugger",
+                    "properties": [
+                        {
+                            "name": "m_Script",
+                            "value": "Assets/Scripts/Debugger/CenterOfMassDebugger.cs"
+                        },
+                        {
+                            "name": "bodies",
+                            "value": "[Generic]"
+                        },
+                        {
+                            "name": "bodies[0]",
+                            "value": "Head"
+                        },
+                        {
+                            "name": "bodies[1]",
+                            "value": "Body"
+                        },
+                        {
+                            "name": "bodies[2]",
+                            "value": "LeftThigh"
+                        },
+                        {
+                            "name": "bodies[3]",
+                            "value": "LeftCalf"
+                        },
+                        {
+                            "name": "bodies[4]",
+                            "value": "RightThigh"
+                        },
+                        {
+                            "name": "bodies[5]",
+                            "value": "RightCalf"
+                        },
+                        {
+                            "name": "bodies[6]",
+                            "value": "LeftUpperArm"
+                        },
+                        {
+                            "name": "bodies[7]",
+                            "value": "RightUpperArm "
+                        },
+                        {
+                            "name": "bodies[8]",
+                            "value": "LeftForearm"
+                        },
+                        {
+                            "name": "bodies[9]",
+                            "value": "RightForearm"
+                        },
+                        {
+                            "name": "bodies[10]",
+                            "value": "LeftHand"
+                        },
+                        {
+                            "name": "bodies[11]",
+                            "value": "RightHand"
+                        }
+                    ]
                 }
             ]
         },
@@ -3664,7 +4277,7 @@
                         },
                         {
                             "name": "m_ConnectedRigidBody",
-                            "value": "Hip"
+                            "value": "Body"
                         },
                         {
                             "name": "m_AutoConfigureConnectedAnchor",
@@ -3676,7 +4289,7 @@
                         },
                         {
                             "name": "m_ConnectedAnchor",
-                            "value": "(0.02, -0.01)"
+                            "value": "(-0.01, -0.70)"
                         },
                         {
                             "name": "m_UseConnectedAnchor",
@@ -4156,40 +4769,6 @@
                     ]
                 },
                 {
-                    "type": "PlayerController",
-                    "properties": [
-                        {
-                            "name": "m_Script",
-                            "value": "Assets/Scripts/Controller/PlayerController.cs"
-                        },
-                        {
-                            "name": "torso",
-                            "value": "Torso"
-                        },
-                        {
-                            "name": "moveForce",
-                            "value": "100"
-                        }
-                    ]
-                },
-                {
-                    "type": "BalanceController",
-                    "properties": [
-                        {
-                            "name": "m_Script",
-                            "value": "Assets/Scripts/Controller/BalanceController.cs"
-                        },
-                        {
-                            "name": "muscle",
-                            "value": "Controller"
-                        },
-                        {
-                            "name": "balanceStrength",
-                            "value": "1"
-                        }
-                    ]
-                },
-                {
                     "type": "MuscleController",
                     "properties": [
                         {
@@ -4214,11 +4793,11 @@
                         },
                         {
                             "name": "baseThighForce",
-                            "value": "180"
+                            "value": "15"
                         },
                         {
                             "name": "baseCalfForce",
-                            "value": "180"
+                            "value": "10"
                         },
                         {
                             "name": "muscleMultiplier",
@@ -4226,7 +4805,7 @@
                         },
                         {
                             "name": "mode",
-                            "value": "Active"
+                            "value": "Passive"
                         },
                         {
                             "name": "activeStrength",
@@ -4267,7 +4846,7 @@
                         },
                         {
                             "name": "torso",
-                            "value": "Torso"
+                            "value": "null"
                         },
                         {
                             "name": "stateController",
@@ -4288,7 +4867,7 @@
                         },
                         {
                             "name": "balance",
-                            "value": "Controller"
+                            "value": "null"
                         },
                         {
                             "name": "muscle",
@@ -4296,7 +4875,7 @@
                         },
                         {
                             "name": "torso",
-                            "value": "Torso"
+                            "value": "null"
                         },
                         {
                             "name": "hitDuration",
@@ -4325,11 +4904,65 @@
                         },
                         {
                             "name": "target",
-                            "value": "Torso"
+                            "value": "null"
                         },
                         {
                             "name": "force",
-                            "value": "15"
+                            "value": "1"
+                        }
+                    ]
+                },
+                {
+                    "type": "BalanceController",
+                    "properties": [
+                        {
+                            "name": "m_Script",
+                            "value": "Assets/Scripts/Controller/BalanceController.cs"
+                        },
+                        {
+                            "name": "torso",
+                            "value": "null"
+                        },
+                        {
+                            "name": "leftThigh",
+                            "value": "LeftThigh"
+                        },
+                        {
+                            "name": "rightThigh",
+                            "value": "RightThigh"
+                        },
+                        {
+                            "name": "strength",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "type": "SpineMuscleController",
+                    "properties": [
+                        {
+                            "name": "m_Script",
+                            "value": "Assets/Scripts/Controller/SpineMuscleController.cs"
+                        },
+                        {
+                            "name": "torso",
+                            "value": "null"
+                        },
+                        {
+                            "name": "hipJoint",
+                            "value": "null"
+                        },
+                        {
+                            "name": "targetAngle",
+                            "value": "0"
+                        },
+                        {
+                            "name": "p",
+                            "value": "5"
+                        },
+                        {
+                            "name": "d",
+                            "value": "0.5"
                         }
                     ]
                 }
@@ -5644,337 +6277,6 @@
             ]
         },
         {
-            "name": "Torso",
-            "active": true,
-            "parent": "Physics",
-            "components": [
-                {
-                    "type": "UnityEngine.Transform",
-                    "properties": [
-                        {
-                            "name": "m_LocalRotation",
-                            "value": "(0.00000, 0.00000, 0.00000, 1.00000)"
-                        },
-                        {
-                            "name": "m_LocalPosition",
-                            "value": "(0.00, 0.00, 0.00)"
-                        },
-                        {
-                            "name": "m_LocalScale",
-                            "value": "(1.00, 1.00, 1.00)"
-                        },
-                        {
-                            "name": "m_ConstrainProportionsScale",
-                            "value": "False"
-                        }
-                    ]
-                },
-                {
-                    "type": "UnityEngine.SpriteRenderer",
-                    "properties": [
-                        {
-                            "name": "m_CastShadows",
-                            "value": "Off"
-                        },
-                        {
-                            "name": "m_ReceiveShadows",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_DynamicOccludee",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_StaticShadowCaster",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_MotionVectors",
-                            "value": "Per Object Motion"
-                        },
-                        {
-                            "name": "m_LightProbeUsage",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_ReflectionProbeUsage",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_RayTracingMode",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_RayTraceProcedural",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_RayTracingAccelStructBuildFlagsOverride",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_RayTracingAccelStructBuildFlags",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_SmallMeshCulling",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_ForceMeshLod",
-                            "value": "-1"
-                        },
-                        {
-                            "name": "m_MeshLodSelectionBias",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_RenderingLayerMask",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_RendererPriority",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_Materials",
-                            "value": "[Generic]"
-                        },
-                        {
-                            "name": "m_Materials[0]",
-                            "value": "Resources/unity_builtin_extra"
-                        },
-                        {
-                            "name": "m_ProbeAnchor",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_LightProbeVolumeOverride",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_ScaleInLightmap",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_ReceiveGI",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_PreserveUVs",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_IgnoreNormalsForChartDetection",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_ImportantGI",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_StitchLightmapSeams",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_MinimumChartSize",
-                            "value": "4"
-                        },
-                        {
-                            "name": "m_AutoUVMaxDistance",
-                            "value": "0.5"
-                        },
-                        {
-                            "name": "m_AutoUVMaxAngle",
-                            "value": "89"
-                        },
-                        {
-                            "name": "m_LightmapParameters",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_MaskInteraction",
-                            "value": "None"
-                        },
-                        {
-                            "name": "m_Sprite",
-                            "value": "Assets/Character/Human_female.png"
-                        },
-                        {
-                            "name": "m_Color",
-                            "value": "RGBA(1.000, 1.000, 1.000, 1.000)"
-                        },
-                        {
-                            "name": "m_FlipX",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_FlipY",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_DrawMode",
-                            "value": "Simple"
-                        },
-                        {
-                            "name": "m_Size",
-                            "value": "(0.56, 1.34)"
-                        },
-                        {
-                            "name": "m_AdaptiveModeThreshold",
-                            "value": "0.5"
-                        },
-                        {
-                            "name": "m_SpriteTileMode",
-                            "value": "Continuous"
-                        },
-                        {
-                            "name": "m_SpriteSortPoint",
-                            "value": "Center"
-                        }
-                    ]
-                },
-                {
-                    "type": "UnityEngine.Rigidbody2D",
-                    "properties": [
-                        {
-                            "name": "m_BodyType",
-                            "value": "Dynamic"
-                        },
-                        {
-                            "name": "m_Simulated",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_UseFullKinematicContacts",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_UseAutoMass",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_Mass",
-                            "value": "3"
-                        },
-                        {
-                            "name": "m_LinearDamping",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_AngularDamping",
-                            "value": "0.05"
-                        },
-                        {
-                            "name": "m_GravityScale",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_Material",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_IncludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ExcludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_Interpolate",
-                            "value": "Interpolate"
-                        },
-                        {
-                            "name": "m_SleepingMode",
-                            "value": "Start Awake"
-                        },
-                        {
-                            "name": "m_CollisionDetection",
-                            "value": "Continuous"
-                        },
-                        {
-                            "name": "m_Constraints",
-                            "value": "0"
-                        }
-                    ]
-                },
-                {
-                    "type": "UnityEngine.BoxCollider2D",
-                    "properties": [
-                        {
-                            "name": "m_Density",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_Material",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_IncludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ExcludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_LayerOverridePriority",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_ForceSendLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ForceReceiveLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ContactCaptureLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_CallbackLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_IsTrigger",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_UsedByEffector",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_CompositeOperation",
-                            "value": "None"
-                        },
-                        {
-                            "name": "m_CompositeOrder",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_Offset",
-                            "value": "(0.00, -0.21)"
-                        },
-                        {
-                            "name": "m_AutoTiling",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_Size",
-                            "value": "(0.60, 0.93)"
-                        },
-                        {
-                            "name": "m_EdgeRadius",
-                            "value": "0"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "name": "CastPoint",
             "active": true,
             "parent": "CombatPoints",
@@ -6708,7 +7010,7 @@
                         },
                         {
                             "name": "m_ConnectedRigidBody",
-                            "value": "Torso"
+                            "value": "Body"
                         },
                         {
                             "name": "m_AutoConfigureConnectedAnchor",
@@ -6720,383 +7022,7 @@
                         },
                         {
                             "name": "m_ConnectedAnchor",
-                            "value": "(-0.13, 0.17)"
-                        },
-                        {
-                            "name": "m_UseConnectedAnchor",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_UseMotor",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_Motor",
-                            "value": "[Generic]"
-                        },
-                        {
-                            "name": "m_UseLimits",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_AngleLimits",
-                            "value": "[Generic]"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "Hip",
-            "active": true,
-            "parent": "Physics",
-            "components": [
-                {
-                    "type": "UnityEngine.Transform",
-                    "properties": [
-                        {
-                            "name": "m_LocalRotation",
-                            "value": "(0.00000, 0.00000, 0.00000, 1.00000)"
-                        },
-                        {
-                            "name": "m_LocalPosition",
-                            "value": "(-0.03, -0.70, 0.00)"
-                        },
-                        {
-                            "name": "m_LocalScale",
-                            "value": "(1.00, 1.00, 1.00)"
-                        },
-                        {
-                            "name": "m_ConstrainProportionsScale",
-                            "value": "False"
-                        }
-                    ]
-                },
-                {
-                    "type": "UnityEngine.SpriteRenderer",
-                    "properties": [
-                        {
-                            "name": "m_CastShadows",
-                            "value": "Off"
-                        },
-                        {
-                            "name": "m_ReceiveShadows",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_DynamicOccludee",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_StaticShadowCaster",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_MotionVectors",
-                            "value": "Per Object Motion"
-                        },
-                        {
-                            "name": "m_LightProbeUsage",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_ReflectionProbeUsage",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_RayTracingMode",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_RayTraceProcedural",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_RayTracingAccelStructBuildFlagsOverride",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_RayTracingAccelStructBuildFlags",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_SmallMeshCulling",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_ForceMeshLod",
-                            "value": "-1"
-                        },
-                        {
-                            "name": "m_MeshLodSelectionBias",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_RenderingLayerMask",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_RendererPriority",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_Materials",
-                            "value": "[Generic]"
-                        },
-                        {
-                            "name": "m_Materials[0]",
-                            "value": "Resources/unity_builtin_extra"
-                        },
-                        {
-                            "name": "m_ProbeAnchor",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_LightProbeVolumeOverride",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_ScaleInLightmap",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_ReceiveGI",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_PreserveUVs",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_IgnoreNormalsForChartDetection",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_ImportantGI",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_StitchLightmapSeams",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_MinimumChartSize",
-                            "value": "4"
-                        },
-                        {
-                            "name": "m_AutoUVMaxDistance",
-                            "value": "0.5"
-                        },
-                        {
-                            "name": "m_AutoUVMaxAngle",
-                            "value": "89"
-                        },
-                        {
-                            "name": "m_LightmapParameters",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_MaskInteraction",
-                            "value": "None"
-                        },
-                        {
-                            "name": "m_Sprite",
-                            "value": "Assets/Character/Human_female.png"
-                        },
-                        {
-                            "name": "m_Color",
-                            "value": "RGBA(1.000, 1.000, 1.000, 1.000)"
-                        },
-                        {
-                            "name": "m_FlipX",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_FlipY",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_DrawMode",
-                            "value": "Simple"
-                        },
-                        {
-                            "name": "m_Size",
-                            "value": "(0.51, 0.51)"
-                        },
-                        {
-                            "name": "m_AdaptiveModeThreshold",
-                            "value": "0.5"
-                        },
-                        {
-                            "name": "m_SpriteTileMode",
-                            "value": "Continuous"
-                        },
-                        {
-                            "name": "m_SpriteSortPoint",
-                            "value": "Center"
-                        }
-                    ]
-                },
-                {
-                    "type": "UnityEngine.Rigidbody2D",
-                    "properties": [
-                        {
-                            "name": "m_BodyType",
-                            "value": "Dynamic"
-                        },
-                        {
-                            "name": "m_Simulated",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_UseFullKinematicContacts",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_UseAutoMass",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_Mass",
-                            "value": "2.5"
-                        },
-                        {
-                            "name": "m_LinearDamping",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_AngularDamping",
-                            "value": "0.05"
-                        },
-                        {
-                            "name": "m_GravityScale",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_Material",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_IncludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ExcludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_Interpolate",
-                            "value": "None"
-                        },
-                        {
-                            "name": "m_SleepingMode",
-                            "value": "Start Awake"
-                        },
-                        {
-                            "name": "m_CollisionDetection",
-                            "value": "Discrete"
-                        },
-                        {
-                            "name": "m_Constraints",
-                            "value": "0"
-                        }
-                    ]
-                },
-                {
-                    "type": "UnityEngine.BoxCollider2D",
-                    "properties": [
-                        {
-                            "name": "m_Density",
-                            "value": "1"
-                        },
-                        {
-                            "name": "m_Material",
-                            "value": "null"
-                        },
-                        {
-                            "name": "m_IncludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ExcludeLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_LayerOverridePriority",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_ForceSendLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ForceReceiveLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_ContactCaptureLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_CallbackLayers",
-                            "value": "[LayerMask]"
-                        },
-                        {
-                            "name": "m_IsTrigger",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_UsedByEffector",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_CompositeOperation",
-                            "value": "None"
-                        },
-                        {
-                            "name": "m_CompositeOrder",
-                            "value": "0"
-                        },
-                        {
-                            "name": "m_Offset",
-                            "value": "(0.00, 0.00)"
-                        },
-                        {
-                            "name": "m_AutoTiling",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_Size",
-                            "value": "(0.51, 0.51)"
-                        },
-                        {
-                            "name": "m_EdgeRadius",
-                            "value": "0"
-                        }
-                    ]
-                },
-                {
-                    "type": "UnityEngine.HingeJoint2D",
-                    "properties": [
-                        {
-                            "name": "m_EnableCollision",
-                            "value": "False"
-                        },
-                        {
-                            "name": "m_ConnectedRigidBody",
-                            "value": "Torso"
-                        },
-                        {
-                            "name": "m_AutoConfigureConnectedAnchor",
-                            "value": "True"
-                        },
-                        {
-                            "name": "m_Anchor",
-                            "value": "(0.00, 0.00)"
-                        },
-                        {
-                            "name": "m_ConnectedAnchor",
-                            "value": "(-0.03, -0.70)"
+                            "value": "(-0.14, 0.17)"
                         },
                         {
                             "name": "m_UseConnectedAnchor",

@@ -108,7 +108,6 @@ public class PlayerStateController : MonoBehaviour
 
     void EnterStanding()
     {
-        balance.balanceStrength = 1f;
         muscle.muscleMultiplier = 1f;
     }
 
@@ -116,15 +115,13 @@ public class PlayerStateController : MonoBehaviour
 
     void EnterHit()
     {
-        balance.balanceStrength = 0f;
-        muscle.muscleMultiplier = 0f;
+        muscle.muscleMultiplier = 0.3f;
 
         stateTimer = hitDuration;
     }
     
     void EnterRagdoll()
     {
-        balance.balanceStrength = 0f;
         muscle.muscleMultiplier = 0f;
 
         stateTimer = 0;
@@ -134,7 +131,6 @@ public class PlayerStateController : MonoBehaviour
     {
         recoverTimer = 0;
         balanceTimer = 0;
-        balance.balanceStrength = 0f;
         muscle.muscleMultiplier = 0f;
     }
 
