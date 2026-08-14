@@ -13,10 +13,6 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         Run
     }
 
-    [Serializable] private sealed class WalkData { public float durationSeconds; public List<Frame> frames; }
-    [Serializable] private sealed class Frame { public List<JointSample> joints; }
-    [Serializable] private sealed class JointSample { public string name; public float relativeAngleDeg; }
-
     [Serializable]
     private sealed class Binding
     {
@@ -24,9 +20,6 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         public string jsonJoint;
         [NonSerialized] public HingeJoint2D joint;
         [NonSerialized] public float offset;
-        [NonSerialized] public float[] unwrappedAngles;
-        [NonSerialized] public float[] walkAngles;
-        [NonSerialized] public float[] runAngles;
         [NonSerialized] public float restJointAngle;
         [NonSerialized] public float hingeReference;
         [NonSerialized] public float transitionStartAngle;
@@ -37,6 +30,14 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     [FormerlySerializedAs("walkCycleJson")]
     [SerializeField] private TextAsset walkMotionJson;
     [SerializeField] private TextAsset runMotionJson;
+    [Header("Limb Motion Layer")]
+    [SerializeField] private MotionLayerDefinition punchLayer = new()
+    {
+        layerName = "Punch",
+        targetLimbs = LimbMask.RightArm
+    };
+
+    [Header("Locomotion")]
     [FormerlySerializedAs("playbackSpeed")]
     [SerializeField, Min(0.01f)] private float walkPlaybackSpeed = 1f;
     [SerializeField, Min(0.01f)] private float runPlaybackSpeed = 1f;
@@ -90,6 +91,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         name: "Run",
         type: InputActionType.Button,
         binding: "<Keyboard>/leftShift");
+    [SerializeField] private InputAction punchAction = new(
+        name: "Punch",
+        type: InputActionType.Button,
+        binding: "<Mouse>/leftButton");
     [Tooltip("Continuous world +X force applied to Body while D is held.")]
     [SerializeField, Min(0f)] private float moveForce = 50f;
 
@@ -139,9 +144,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         new() { bodyName = "RightFoot", jsonJoint = "rightFoot" },
     };
 
-    private WalkData data;
-    private WalkData walkData;
-    private WalkData runData;
+    private MotionJsonClip activeClip;
+    private MotionJsonClip walkClip;
+    private MotionJsonClip runClip;
+    private MotionJsonClip punchClip;
     private readonly Dictionary<Rigidbody2D, KinematicPose> kinematicPoses = new();
     private Binding leftThighBinding;
     private Binding leftCalfBinding;
@@ -162,6 +168,8 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private float locomotionTransitionElapsed;
     private float transitionStartMoveSpeed;
     private float currentMoveSpeed;
+    private bool punchRequested;
+    private MotionLayerPlayer punchLayerPlayer;
     private float leftFootPlantWeight;
     private float rightFootPlantWeight;
     private float lockedBodyWorldY;
@@ -203,14 +211,20 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private void OnEnable()
     {
+        punchAction.performed += OnPunchPerformed;
         walkAction.Enable();
         runAction.Enable();
+        punchAction.Enable();
     }
 
     private void OnDisable()
     {
+        punchAction.performed -= OnPunchPerformed;
         walkAction.Disable();
         runAction.Disable();
+        punchAction.Disable();
+        punchRequested = false;
+        punchLayerPlayer?.Reset();
         motionState = MotionState.Idle;
         isPlaying = false;
         if (initialized) SetMotorsEnabled(false);
@@ -221,11 +235,33 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         RestoreBodyTypes();
     }
 
+    private void OnPunchPerformed(InputAction.CallbackContext context)
+    {
+        punchRequested = true;
+    }
+
+    private void StartPunchLayer()
+    {
+        punchLayerPlayer.Play();
+    }
+
+    private void UpdatePunchLayer()
+    {
+        punchLayerPlayer.Tick(Time.fixedDeltaTime, punchClip.DurationSeconds);
+    }
+
     public void Initialize()
     {
-        walkData = ParseMotionData(walkMotionJson, "Walk");
-        runData = ParseMotionData(runMotionJson, "Run");
-        data = motionState == MotionState.Run ? runData : walkData;
+        punchLayer ??= new MotionLayerDefinition
+        {
+            layerName = "Punch",
+            targetLimbs = LimbMask.RightArm
+        };
+        walkClip = MotionJsonClip.Parse(walkMotionJson, "Walk");
+        runClip = MotionJsonClip.Parse(runMotionJson, "Run");
+        punchClip = MotionJsonClip.Parse(punchLayer.motionJson, punchLayer.layerName);
+        punchLayerPlayer = new MotionLayerPlayer(punchLayer);
+        activeClip = motionState == MotionState.Run ? runClip : walkClip;
 
         Transform bodyTransform = FindDescendant(transform, "Body");
         if (bodyTransform == null || !bodyTransform.TryGetComponent(out centralBody))
@@ -250,16 +286,15 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                                    + binding.joint.jointAngle;
             if (!string.IsNullOrEmpty(binding.jsonJoint))
             {
-                int walkIndex = FindJointIndex(walkData.frames[0], binding.jsonJoint);
-                int runIndex = FindJointIndex(runData.frames[0], binding.jsonJoint);
-                binding.walkAngles = UnwrapAngles(walkData, walkIndex);
-                binding.runAngles = UnwrapAngles(runData, runIndex);
-                binding.unwrappedAngles = motionState == MotionState.Run
-                    ? binding.runAngles
-                    : binding.walkAngles;
+                walkClip.GetAngles(binding.jsonJoint);
+                runClip.GetAngles(binding.jsonJoint);
+                punchClip.GetAngles(binding.jsonJoint);
                 binding.offset = CalculateStaticAxisOffset(binding);
-                WarnIfLimitsCannotRepresentCycle(binding, binding.walkAngles, "Walk");
-                WarnIfLimitsCannotRepresentCycle(binding, binding.runAngles, "Run");
+                WarnIfLimitsCannotRepresentCycle(binding, walkClip, "Walk");
+                WarnIfLimitsCannotRepresentCycle(binding, runClip, "Run");
+                if (LimbMaskUtility.ContainsJoint(punchLayer.targetLimbs, binding.jsonJoint))
+                    WarnIfLimitsCannotRepresentCycle(
+                        binding, punchClip, punchLayer.layerName);
             }
             binding.joint.useMotor = false;
         }
@@ -314,25 +349,20 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         locomotionTransitionElapsed = locomotionTransitionDuration;
         transitionStartMoveSpeed = 0f;
         currentMoveSpeed = 0f;
+        punchLayerPlayer.Reset();
         initialized = true;
         if (animatedMode && !isPlaying)
             BeginStopTransition();
     }
 
-    private static WalkData ParseMotionData(TextAsset motionJson, string label)
-    {
-        if (motionJson == null)
-            throw new InvalidOperationException($"{label} Motion JSON is not assigned.");
-
-        WalkData result = JsonUtility.FromJson<WalkData>(motionJson.text);
-        if (result?.frames == null || result.frames.Count < 2 || result.durationSeconds <= 0f)
-            throw new InvalidOperationException($"{label} Motion JSON has no usable frames.");
-        return result;
-    }
-
     private void FixedUpdate()
     {
         if (!initialized) return;
+
+        bool punchPressed = punchRequested;
+        punchRequested = false;
+        if (punchPressed) StartPunchLayer();
+        UpdatePunchLayer();
 
         MotionState desiredState = !walkAction.IsPressed()
             ? MotionState.Idle
@@ -367,20 +397,20 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
         ApplyUprightBalance();
 
-        centralBody.AddForce(Vector2.right * moveForce, ForceMode2D.Force);
+        if (motionState == MotionState.Walk || motionState == MotionState.Run)
+            centralBody.AddForce(Vector2.right * moveForce, ForceMode2D.Force);
         UpdateAnimationTime();
-        GetFrameSample(normalizedTime, out int aIndex, out int bIndex, out float t);
 
         foreach (Binding binding in bindings)
         {
             float target = binding.restJointAngle;
-            if (binding.unwrappedAngles != null)
+            if (!string.IsNullOrEmpty(binding.jsonJoint))
             {
-                float source = Mathf.Lerp(
-                    binding.unwrappedAngles[aIndex], binding.unwrappedAngles[bIndex], t);
+                float source = activeClip.Sample(binding.jsonJoint, normalizedTime);
                 target = NormalizeJointAngle(binding.offset + projectionAngleSign * source);
                 target = BlendLocomotionTarget(binding, target);
             }
+            target = ApplyLimbMotionLayer(binding, target);
             binding.lastTargetAngle = target;
 
             if (clampToJointLimits && binding.joint.useLimits)
@@ -407,11 +437,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private void UpdateAnimationTime()
     {
-        normalizedTime = Mathf.Repeat(
-            normalizedTime + Time.fixedDeltaTime * GetPlaybackSpeed(motionState) /
-            data.durationSeconds,
-            1f);
-        elapsed = normalizedTime * data.durationSeconds;
+        float nextTime = normalizedTime + Time.fixedDeltaTime *
+            GetPlaybackSpeed(motionState) / activeClip.DurationSeconds;
+        normalizedTime = Mathf.Repeat(nextTime, 1f);
+        elapsed = normalizedTime * activeClip.DurationSeconds;
     }
 
     private void ChangeMotionState(MotionState nextState)
@@ -429,15 +458,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         }
 
         foreach (Binding binding in bindings)
-        {
             binding.transitionStartAngle = binding.lastTargetAngle;
-            binding.unwrappedAngles = nextState == MotionState.Run
-                ? binding.runAngles
-                : binding.walkAngles;
-        }
 
-        data = nextState == MotionState.Run ? runData : walkData;
-        elapsed = normalizedTime * data.durationSeconds;
+        activeClip = GetMotionClip(nextState);
+        elapsed = normalizedTime * activeClip.DurationSeconds;
         transitionStartMoveSpeed = previousState == MotionState.Idle
             ? 0f
             : currentMoveSpeed;
@@ -487,8 +511,32 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private float GetPlaybackSpeed(MotionState state) =>
         state == MotionState.Run ? runPlaybackSpeed : walkPlaybackSpeed;
 
-    private float GetMoveSpeed(MotionState state) =>
-        state == MotionState.Run ? runMoveSpeed : walkMoveSpeed;
+    private float GetMoveSpeed(MotionState state) => state switch
+    {
+        MotionState.Run => runMoveSpeed,
+        MotionState.Walk => walkMoveSpeed,
+        _ => 0f
+    };
+
+    private MotionJsonClip GetMotionClip(MotionState state) => state switch
+    {
+        MotionState.Run => runClip,
+        _ => walkClip
+    };
+
+    private float ApplyLimbMotionLayer(Binding binding, float baseAngle)
+    {
+        if (punchLayerPlayer.Weight <= 0f || string.IsNullOrEmpty(binding.jsonJoint) ||
+            !LimbMaskUtility.ContainsJoint(
+                punchLayer.targetLimbs, binding.jsonJoint)) return baseAngle;
+
+        float source = punchClip.Sample(
+            binding.jsonJoint,
+            punchLayerPlayer.NormalizedTime);
+        float layerAngle = NormalizeJointAngle(
+            binding.offset + projectionAngleSign * source);
+        return Mathf.LerpAngle(baseAngle, layerAngle, punchLayerPlayer.Weight);
+    }
 
     private void BeginStopTransition()
     {
@@ -575,21 +623,19 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         kinematicPoses.Clear();
         kinematicPoses[centralBody] = new KinematicPose(bodyTarget, uprightWorldAngle);
 
-        GetFrameSample(normalizedTime, out int aIndex, out int bIndex, out float t);
-
         foreach (Binding binding in bindings)
         {
             float targetJointAngle = binding.restJointAngle;
-            if (binding.unwrappedAngles != null)
+            if (!string.IsNullOrEmpty(binding.jsonJoint))
             {
-                float source = Mathf.Lerp(
-                    binding.unwrappedAngles[aIndex], binding.unwrappedAngles[bIndex], t);
+                float source = activeClip.Sample(binding.jsonJoint, normalizedTime);
                 float animatedJointAngle = NormalizeJointAngle(
                     binding.offset + projectionAngleSign * source);
                 animatedJointAngle = BlendLocomotionTarget(binding, animatedJointAngle);
                 targetJointAngle = Mathf.LerpAngle(
                     binding.restJointAngle, animatedJointAngle, walkPoseWeight);
             }
+            targetJointAngle = ApplyLimbMotionLayer(binding, targetJointAngle);
             binding.lastTargetAngle = targetJointAngle;
 
             Rigidbody2D parent = binding.joint.connectedBody;
@@ -1083,19 +1129,6 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         centralBody.AddTorque(torque, ForceMode2D.Force);
     }
 
-    private static float[] UnwrapAngles(WalkData motionData, int jsonIndex)
-    {
-        var result = new float[motionData.frames.Count];
-        result[0] = SourceAngle(motionData.frames[0], jsonIndex);
-        for (int i = 1; i < result.Length; i++)
-        {
-            float previousWrapped = SourceAngle(motionData.frames[i - 1], jsonIndex);
-            float currentWrapped = SourceAngle(motionData.frames[i], jsonIndex);
-            result[i] = result[i - 1] + Mathf.DeltaAngle(previousWrapped, currentWrapped);
-        }
-        return result;
-    }
-
     private static float CalculateStaticAxisOffset(Binding binding)
     {
         // Limbs are authored along local -Y. In this Player artwork the feet's
@@ -1130,14 +1163,14 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private void WarnIfLimitsCannotRepresentCycle(
         Binding binding,
-        float[] motionAngles,
+        MotionJsonClip motionClip,
         string motionName)
     {
         if (!logLimitWarnings || !binding.joint.useLimits) return;
         JointAngleLimits2D limits = binding.joint.limits;
         float minTarget = float.PositiveInfinity;
         float maxTarget = float.NegativeInfinity;
-        foreach (float source in motionAngles)
+        foreach (float source in motionClip.GetAngles(binding.jsonJoint))
         {
             float target = NormalizeJointAngle(binding.offset + projectionAngleSign * source);
             minTarget = Mathf.Min(minTarget, target);
@@ -1154,28 +1187,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         }
     }
 
-    private void GetFrameSample(
-        float normalizedTime,
-        out int aIndex,
-        out int bIndex,
-        out float t)
-    {
-        float framePosition = normalizedTime * (data.frames.Count - 1);
-        aIndex = Mathf.Min(Mathf.FloorToInt(framePosition), data.frames.Count - 2);
-        bIndex = aIndex + 1;
-        t = framePosition - aIndex;
-    }
-
-    private static float SourceAngle(Frame frame, int index) => frame.joints[index].relativeAngleDeg;
-
     private static float NormalizeJointAngle(float angle) => Mathf.DeltaAngle(0f, angle);
-
-    private static int FindJointIndex(Frame frame, string name)
-    {
-        for (int i = 0; i < frame.joints.Count; i++)
-            if (frame.joints[i].name == name) return i;
-        throw new InvalidOperationException($"JSON joint '{name}' is missing.");
-    }
 
     private static Transform FindDescendant(Transform root, string name)
     {
@@ -1245,7 +1257,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     {
         if (!initialized) Initialize();
         normalizedTime = Mathf.Repeat(value, 1f);
-        elapsed = normalizedTime * data.durationSeconds;
+        elapsed = normalizedTime * activeClip.DurationSeconds;
     }
     public void Restart()
     {
