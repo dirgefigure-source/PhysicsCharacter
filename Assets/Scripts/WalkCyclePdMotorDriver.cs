@@ -37,6 +37,30 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     [SerializeField, Min(0f)] private float groundProbeHeight = 1f;
     [SerializeField, Min(0.01f)] private float groundProbeDistance = 5f;
     [SerializeField, Min(0f)] private float footGroundClearance = 0.01f;
+    [Tooltip("World Z angle at which the one-piece foot artwork has a level sole.")]
+    [SerializeField] private float plantedFootWorldAngle;
+    [Tooltip("How quickly a support foot blends from the FK angle to a level sole.")]
+    [SerializeField, Min(0.01f)] private float footPlantBlendSpeed = 10f;
+    [Tooltip("Shortens the virtual sole at both ends to avoid balancing on a sprite tip.")]
+    [SerializeField, Range(0f, 0.45f)] private float virtualSoleEndInset = 0.12f;
+
+    [Header("Support Leg IK")]
+    [Tooltip("Keeps Body Y fixed and corrects only the current support leg. Disable to restore the previous FK grounding.")]
+    [SerializeField] private bool supportLegIkEnabled = true;
+    [Tooltip("Offsets the fixed Body height captured when the component initializes. Negative values bend the knees more.")]
+    [SerializeField] private float fixedBodyHeightOffset;
+    [Tooltip("The other ankle must be this much closer to the ground before support changes sides.")]
+    [SerializeField, Min(0f)] private float supportSwitchHysteresis = 0.05f;
+    [SerializeField, Min(0.01f)] private float supportIkBlendSpeed = 8f;
+    [Tooltip("Converts the rotated sole's extra drop into a higher ankle target, which is absorbed by hip and knee bend.")]
+    [SerializeField, Range(0f, 1f)] private float penetrationToKnee = 1f;
+    [Tooltip("Safety cap for the vertical correction transferred into one IK solve.")]
+    [SerializeField, Min(0f)] private float maxPenetrationToKnee = 0.3f;
+    [Tooltip("Applies the same hip/knee correction to the swing leg only while its sole is below ground.")]
+    [SerializeField] private bool preventSwingFootPenetration = true;
+    [SerializeField, Range(0f, 1f)] private float swingFootClearanceIkWeight = 1f;
+    [SerializeField, Min(0f)] private float swingFootPenetrationTolerance;
+    [SerializeField] private bool logUnreachableIkTargets = true;
 
     [Header("Input System")]
     [SerializeField] private InputAction walkAction = new(
@@ -103,6 +127,14 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private Rigidbody2D[] allBodies;
     private RigidbodyType2D[] originalBodyTypes;
     private float elapsed;
+    private float leftFootPlantWeight;
+    private float rightFootPlantWeight;
+    private float lockedBodyWorldY;
+    private int supportLeg;
+    private bool leftIkReachWarningIssued;
+    private bool rightIkReachWarningIssued;
+    private float leftKneeBendSign;
+    private float rightKneeBendSign;
     private bool initialized;
 
     private readonly struct KinematicPose
@@ -201,6 +233,14 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
         elapsed = 0f;
         normalizedTime = 0f;
+        leftFootPlantWeight = 0f;
+        rightFootPlantWeight = 0f;
+        lockedBodyWorldY = centralBody.position.y;
+        supportLeg = 0;
+        leftIkReachWarningIssued = false;
+        rightIkReachWarningIssued = false;
+        leftKneeBendSign = 0f;
+        rightKneeBendSign = 0f;
         initialized = true;
     }
 
@@ -270,6 +310,8 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private void DriveKinematicPose()
     {
         Vector2 bodyTarget = centralBody.position + Vector2.right * animatedMoveSpeed * Time.fixedDeltaTime;
+        if (supportLegIkEnabled)
+            bodyTarget.y = lockedBodyWorldY + fixedBodyHeightOffset;
         kinematicPoses.Clear();
         kinematicPoses[centralBody] = new KinematicPose(bodyTarget, uprightWorldAngle);
 
@@ -305,13 +347,294 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                 childRotation);
         }
 
-        ApplyAnimatedGroundCorrection();
+        if (supportLegIkEnabled)
+        {
+            ApplySupportLegIk();
+        }
+        else
+        {
+            ApplySupportFootFlattening();
+            ApplyAnimatedGroundCorrection();
+        }
 
         foreach (KeyValuePair<Rigidbody2D, KinematicPose> item in kinematicPoses)
         {
             item.Key.MovePosition(item.Value.position);
             item.Key.MoveRotation(item.Value.rotation);
         }
+    }
+
+    private void ApplySupportLegIk()
+    {
+        Binding leftThigh = FindBinding("LeftThigh");
+        Binding leftCalf = FindBinding("LeftCalf");
+        Binding leftFoot = FindBinding("LeftFoot");
+        Binding rightThigh = FindBinding("RightThigh");
+        Binding rightCalf = FindBinding("RightCalf");
+        Binding rightFoot = FindBinding("RightFoot");
+
+        bool hasLeft = TryGetAnkleGroundTarget(
+            leftFoot, leftFootCollider, out Vector2 leftTarget, out float leftScore);
+        bool hasRight = TryGetAnkleGroundTarget(
+            rightFoot, rightFootCollider, out Vector2 rightTarget, out float rightScore);
+
+        if (supportLeg == -1 && (!hasLeft ||
+            (hasRight && rightScore + supportSwitchHysteresis < leftScore)))
+            supportLeg = hasRight ? 1 : 0;
+        else if (supportLeg == 1 && (!hasRight ||
+            (hasLeft && leftScore + supportSwitchHysteresis < rightScore)))
+            supportLeg = hasLeft ? -1 : 0;
+        else if (supportLeg == 0)
+            supportLeg = hasLeft && (!hasRight || leftScore <= rightScore) ? -1 : hasRight ? 1 : 0;
+
+        float blendStep = supportIkBlendSpeed * Time.fixedDeltaTime;
+        leftFootPlantWeight = Mathf.MoveTowards(
+            leftFootPlantWeight, supportLeg == -1 ? 1f : 0f, blendStep);
+        rightFootPlantWeight = Mathf.MoveTowards(
+            rightFootPlantWeight, supportLeg == 1 ? 1f : 0f, blendStep);
+
+        bool leftPenetrating = hasLeft && preventSwingFootPenetration &&
+                               IsFootPenetratingGround(leftFoot, leftFootCollider);
+        if (hasLeft && (leftFootPlantWeight > 0f || leftPenetrating))
+        {
+            float leftIkWeight = leftPenetrating
+                ? Mathf.Max(leftFootPlantWeight, swingFootClearanceIkWeight)
+                : leftFootPlantWeight;
+            SolveLegToGround(leftThigh, leftCalf, leftFoot, leftFootCollider, leftTarget,
+                leftIkWeight, leftFootPlantWeight, leftPenetrating,
+                ref leftIkReachWarningIssued, ref leftKneeBendSign);
+        }
+
+        bool rightPenetrating = hasRight && preventSwingFootPenetration &&
+                                IsFootPenetratingGround(rightFoot, rightFootCollider);
+        if (hasRight && (rightFootPlantWeight > 0f || rightPenetrating))
+        {
+            float rightIkWeight = rightPenetrating
+                ? Mathf.Max(rightFootPlantWeight, swingFootClearanceIkWeight)
+                : rightFootPlantWeight;
+            SolveLegToGround(rightThigh, rightCalf, rightFoot, rightFootCollider, rightTarget,
+                rightIkWeight, rightFootPlantWeight, rightPenetrating,
+                ref rightIkReachWarningIssued, ref rightKneeBendSign);
+        }
+    }
+
+    private bool TryGetAnkleGroundTarget(
+        Binding footBinding,
+        Collider2D footCollider,
+        out Vector2 target,
+        out float score)
+    {
+        target = Vector2.zero;
+        score = float.PositiveInfinity;
+        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
+        if (!kinematicPoses.TryGetValue(foot, out KinematicPose footPose)) return false;
+
+        Vector2 rawAnkle = footPose.position
+                         + Rotate(footBinding.joint.anchor, footPose.rotation);
+        Vector2 origin = rawAnkle + Vector2.up * groundProbeHeight;
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin, Vector2.down, groundProbeHeight + groundProbeDistance, groundLayers);
+        if (hit.collider == null) return false;
+
+        KinematicPose flatFootAtZeroAnkle = new KinematicPose(
+            -Rotate(footBinding.joint.anchor, plantedFootWorldAngle),
+            plantedFootWorldAngle);
+        float soleBelowAnkle = GetVirtualSoleBottomAtPose(
+            foot, footCollider, flatFootAtZeroAnkle);
+        target = new Vector2(
+            rawAnkle.x,
+            hit.point.y + footGroundClearance - soleBelowAnkle);
+        score = rawAnkle.y - target.y;
+        return true;
+    }
+
+    private bool IsFootPenetratingGround(Binding footBinding, Collider2D footCollider)
+    {
+        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
+        if (!kinematicPoses.TryGetValue(foot, out KinematicPose footPose)) return false;
+
+        Vector2 ankle = footPose.position
+                      + Rotate(footBinding.joint.anchor, footPose.rotation);
+        RaycastHit2D hit = Physics2D.Raycast(
+            ankle + Vector2.up * groundProbeHeight,
+            Vector2.down,
+            groundProbeHeight + groundProbeDistance,
+            groundLayers);
+        if (hit.collider == null) return false;
+
+        // Penetration safety uses the complete collider, not the inset visual
+        // sole used for normal support selection.
+        float soleBottom = GetColliderBottomAtPose(foot, footCollider, footPose);
+        float penetration = hit.point.y + footGroundClearance - soleBottom;
+        return penetration > swingFootPenetrationTolerance;
+    }
+
+    private void SolveLegToGround(
+        Binding thighBinding,
+        Binding calfBinding,
+        Binding footBinding,
+        Collider2D footCollider,
+        Vector2 ankleTarget,
+        float ikWeight,
+        float footPlantWeight,
+        bool enforceFullColliderClearance,
+        ref bool reachWarningIssued,
+        ref float lockedBendSign)
+    {
+        Rigidbody2D thigh = thighBinding.joint.attachedRigidbody;
+        Rigidbody2D calf = calfBinding.joint.attachedRigidbody;
+        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
+        if (!kinematicPoses.TryGetValue(thigh, out KinematicPose rawThigh) ||
+            !kinematicPoses.TryGetValue(calf, out KinematicPose rawCalf) ||
+            !kinematicPoses.TryGetValue(foot, out KinematicPose rawFoot)) return;
+
+        Rigidbody2D hipBody = thighBinding.joint.connectedBody;
+        if (hipBody == null || !kinematicPoses.TryGetValue(hipBody, out KinematicPose bodyPose)) return;
+
+        Vector2 hip = bodyPose.position
+                    + Rotate(thighBinding.joint.connectedAnchor, bodyPose.rotation);
+        Vector2 thighAxis = calfBinding.joint.connectedAnchor - thighBinding.joint.anchor;
+        Vector2 calfAxis = footBinding.joint.connectedAnchor - calfBinding.joint.anchor;
+        float upperLength = thighAxis.magnitude;
+        float lowerLength = calfAxis.magnitude;
+        if (upperLength <= 0.0001f || lowerLength <= 0.0001f) return;
+
+        float footRotation = Mathf.LerpAngle(
+            rawFoot.rotation, plantedFootWorldAngle, footPlantWeight);
+        float flatSoleBelowAnkle = GetSoleBelowAnkleAtRotation(
+            footBinding, footCollider, plantedFootWorldAngle);
+        float rotatedSoleBelowAnkle = enforceFullColliderClearance
+            ? GetColliderBelowAnkleAtRotation(footBinding, footCollider, footRotation)
+            : GetSoleBelowAnkleAtRotation(footBinding, footCollider, footRotation);
+        float extraSoleDrop = Mathf.Max(0f, flatSoleBelowAnkle - rotatedSoleBelowAnkle);
+        float transferredHeight = Mathf.Min(
+            extraSoleDrop * penetrationToKnee,
+            maxPenetrationToKnee);
+        // Body stays fixed. Raising the ankle target shortens the hip-to-ankle
+        // distance, so the two-bone solve absorbs this height in hip/knee bend.
+        ankleTarget.y += transferredHeight;
+
+        Vector2 toTarget = ankleTarget - hip;
+        float requestedDistance = toTarget.magnitude;
+        if (requestedDistance <= 0.0001f) toTarget = Vector2.down * 0.0001f;
+        float minReach = Mathf.Abs(upperLength - lowerLength) + 0.0001f;
+        float maxReach = upperLength + lowerLength - 0.0001f;
+        float distance = Mathf.Clamp(toTarget.magnitude, minReach, maxReach);
+        Vector2 direction = toTarget.normalized;
+        ankleTarget = hip + direction * distance;
+
+        bool unreachable = requestedDistance < minReach || requestedDistance > maxReach;
+        if (unreachable && logUnreachableIkTargets && !reachWarningIssued)
+        {
+            Debug.LogWarning(
+                $"Support leg IK target for '{foot.name}' is outside the leg reach " +
+                $"({requestedDistance:F3} vs [{minReach:F3}, {maxReach:F3}]). The target is clamped.",
+                foot);
+            reachWarningIssued = true;
+        }
+        else if (!unreachable)
+        {
+            reachWarningIssued = false;
+        }
+
+        Vector2 rawKnee = rawThigh.position
+                        + Rotate(calfBinding.joint.connectedAnchor, rawThigh.rotation);
+        float bendCross = Cross(direction, rawKnee - hip);
+        if (lockedBendSign == 0f)
+            lockedBendSign = Mathf.Abs(bendCross) > 0.0001f ? Mathf.Sign(bendCross) : 1f;
+        float targetDirection = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        float cosine = Mathf.Clamp(
+            (upperLength * upperLength + distance * distance - lowerLength * lowerLength) /
+            (2f * upperLength * distance), -1f, 1f);
+        float shoulderAngle = Mathf.Acos(cosine) * Mathf.Rad2Deg;
+        float solvedThighRotation = targetDirection + lockedBendSign * shoulderAngle
+                                  - Mathf.Atan2(thighAxis.y, thighAxis.x) * Mathf.Rad2Deg;
+
+        float thighRotation = Mathf.LerpAngle(rawThigh.rotation, solvedThighRotation, ikWeight);
+        Vector2 thighPosition = hip - Rotate(thighBinding.joint.anchor, thighRotation);
+        Vector2 knee = thighPosition
+                     + Rotate(calfBinding.joint.connectedAnchor, thighRotation);
+        float solvedCalfRotation = Mathf.Atan2(
+            ankleTarget.y - knee.y, ankleTarget.x - knee.x) * Mathf.Rad2Deg
+                                  - Mathf.Atan2(calfAxis.y, calfAxis.x) * Mathf.Rad2Deg;
+        float calfRotation = Mathf.LerpAngle(rawCalf.rotation, solvedCalfRotation, ikWeight);
+        Vector2 calfPosition = knee - Rotate(calfBinding.joint.anchor, calfRotation);
+        Vector2 ankle = calfPosition
+                      + Rotate(footBinding.joint.connectedAnchor, calfRotation);
+
+        Vector2 footPosition = ankle - Rotate(footBinding.joint.anchor, footRotation);
+        kinematicPoses[thigh] = new KinematicPose(thighPosition, thighRotation);
+        kinematicPoses[calf] = new KinematicPose(calfPosition, calfRotation);
+        kinematicPoses[foot] = new KinematicPose(footPosition, footRotation);
+    }
+
+    private float GetSoleBelowAnkleAtRotation(
+        Binding footBinding,
+        Collider2D footCollider,
+        float footRotation)
+    {
+        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
+        KinematicPose footAtZeroAnkle = new KinematicPose(
+            -Rotate(footBinding.joint.anchor, footRotation),
+            footRotation);
+        return GetVirtualSoleBottomAtPose(foot, footCollider, footAtZeroAnkle);
+    }
+
+    private static float GetColliderBelowAnkleAtRotation(
+        Binding footBinding,
+        Collider2D footCollider,
+        float footRotation)
+    {
+        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
+        KinematicPose footAtZeroAnkle = new KinematicPose(
+            -Rotate(footBinding.joint.anchor, footRotation),
+            footRotation);
+        return GetColliderBottomAtPose(foot, footCollider, footAtZeroAnkle);
+    }
+
+    private static float Cross(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;
+
+    private Binding FindBinding(string bodyName)
+    {
+        foreach (Binding binding in bindings)
+            if (binding.bodyName == bodyName) return binding;
+        throw new InvalidOperationException($"Binding '{bodyName}' is missing.");
+    }
+
+    private void ApplySupportFootFlattening()
+    {
+        bool hasLeft = TryGetFootGroundCorrection(
+            leftFootBody, leftFootCollider, out float leftBottom, out _);
+        bool hasRight = TryGetFootGroundCorrection(
+            rightFootBody, rightFootCollider, out float rightBottom, out _);
+
+        bool plantLeft = hasLeft && (!hasRight || leftBottom <= rightBottom);
+        bool plantRight = hasRight && !plantLeft;
+        float blendStep = footPlantBlendSpeed * Time.fixedDeltaTime;
+        leftFootPlantWeight = Mathf.MoveTowards(
+            leftFootPlantWeight, plantLeft ? 1f : 0f, blendStep);
+        rightFootPlantWeight = Mathf.MoveTowards(
+            rightFootPlantWeight, plantRight ? 1f : 0f, blendStep);
+
+        FlattenFootAroundAnkle(leftFootBody, leftFootPlantWeight);
+        FlattenFootAroundAnkle(rightFootBody, rightFootPlantWeight);
+    }
+
+    private void FlattenFootAroundAnkle(Rigidbody2D foot, float weight)
+    {
+        if (foot == null || weight <= 0f ||
+            !kinematicPoses.TryGetValue(foot, out KinematicPose pose)) return;
+
+        HingeJoint2D ankle = foot.GetComponent<HingeJoint2D>();
+        if (ankle == null) return;
+
+        // Preserve the FK ankle position while changing only the one-piece
+        // foot angle. This avoids stretching or disconnecting the calf.
+        Vector2 ankleWorld = pose.position + Rotate(ankle.anchor, pose.rotation);
+        float flattenedRotation = Mathf.LerpAngle(
+            pose.rotation, plantedFootWorldAngle, weight);
+        Vector2 flattenedPosition = ankleWorld - Rotate(ankle.anchor, flattenedRotation);
+        kinematicPoses[foot] = new KinematicPose(flattenedPosition, flattenedRotation);
     }
 
     private void ApplyAnimatedGroundCorrection()
@@ -349,7 +672,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         if (foot == null || footCollider == null ||
             !kinematicPoses.TryGetValue(foot, out KinematicPose pose)) return false;
 
-        targetBottom = GetColliderBottomAtPose(foot, footCollider, pose);
+        targetBottom = GetVirtualSoleBottomAtPose(foot, footCollider, pose);
         Vector2 origin = new Vector2(pose.position.x, targetBottom + groundProbeHeight);
         float distance = groundProbeHeight + groundProbeDistance;
         RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down, distance, groundLayers);
@@ -357,6 +680,28 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
         correction = hit.point.y + footGroundClearance - targetBottom;
         return true;
+    }
+
+    private float GetVirtualSoleBottomAtPose(
+        Rigidbody2D body,
+        Collider2D collider,
+        KinematicPose pose)
+    {
+        if (collider is BoxCollider2D box && collider.transform == body.transform)
+        {
+            Vector2 scale = body.transform.lossyScale;
+            scale = new Vector2(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
+            Vector2 centerLocal = Vector2.Scale(box.offset, scale);
+            float halfLength = box.size.x * scale.x * 0.5f * (1f - virtualSoleEndInset);
+            float soleY = centerLocal.y - box.size.y * scale.y * 0.5f;
+            Vector2 left = pose.position + Rotate(
+                new Vector2(centerLocal.x - halfLength, soleY), pose.rotation);
+            Vector2 right = pose.position + Rotate(
+                new Vector2(centerLocal.x + halfLength, soleY), pose.rotation);
+            return Mathf.Min(left.y, right.y);
+        }
+
+        return GetColliderBottomAtPose(body, collider, pose);
     }
 
     private static float GetColliderBottomAtPose(

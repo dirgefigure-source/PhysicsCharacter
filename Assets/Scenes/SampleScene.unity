@@ -1859,8 +1859,23 @@ MonoBehaviour:
   playbackSpeed: 1
   animatedMode: 1
   animatedMoveSpeed: 2
-  physicalFeetInAnimatedMode: 1
   projectionAngleSign: -1
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  groundProbeHeight: 1
+  groundProbeDistance: 5
+  footGroundClearance: 0.01
+  plantedFootWorldAngle: 0
+  footPlantBlendSpeed: 10
+  virtualSoleEndInset: 0.01
+  supportLegIkEnabled: 1
+  fixedBodyHeightOffset: -0.15
+  supportSwitchHysteresis: 0.05
+  supportIkBlendSpeed: 8
+  penetrationToKnee: 1
+  maxPenetrationToKnee: 0.3
+  logUnreachableIkTargets: 1
   walkAction:
     m_Name: Walk
     m_Type: 1
@@ -2366,7 +2381,7 @@ GameObject:
   - component: {fileID: 1273836077}
   - component: {fileID: 1273836076}
   - component: {fileID: 1273836075}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
