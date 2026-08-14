@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3f44849e-9edb-471f-88bc-64ba35fd1325" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/IK/MouseTarget.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/IK/MouseTarget.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,7 +47,7 @@
 }</component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="D:\soft\Unity\Editor\Editor\Unity.exe" />
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.3.20f1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-projectPath D:\soft\Unity\project\PhysicsCharacterLab -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="D:\soft\Unity\project\PhysicsCharacterLab" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -56,7 +57,7 @@
       <method v="2" />
     </configuration>
     <configuration name="Unit Tests (batch mode)" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="D:\soft\Unity\Editor\Editor\Unity.exe" />
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.3.20f1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath D:\soft\Unity\project\PhysicsCharacterLab -testResults Logs/results.xml -logFile Logs/Editor.log -testPlatform EditMode -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="D:\soft\Unity\project\PhysicsCharacterLab" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -92,6 +93,7 @@
       <workItem from="1785208096888" duration="13370000" />
       <workItem from="1785288587924" duration="22579000" />
       <workItem from="1785378336443" duration="19831000" />
+      <workItem from="1786605431489" duration="7130000" />
     </task>
     <servers />
   </component>
@@ -123,6 +125,19 @@
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/Assets/Editor/WalkCycleJsonExporter.cs</url>
+          <line>121</line>
+          <properties documentPath="D:\soft\Unity\project\PhysicsCharacterLab\Assets\Editor\WalkCycleJsonExporter.cs" containingFunctionPresentation="Method 'Export'">
+            <startOffsets>
+              <option value="4992" />
+            </startOffsets>
+            <endOffsets>
+              <option value="5029" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>

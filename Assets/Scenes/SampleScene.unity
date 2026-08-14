@@ -179,7 +179,7 @@ HingeJoint2D:
   m_UseLimits: 1
   m_AngleLimits:
     m_LowerAngle: -105
-    m_UpperAngle: 80
+    m_UpperAngle: 150
 --- !u!70 &165194937
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -316,7 +316,6 @@ GameObject:
   - component: {fileID: 182032466}
   - component: {fileID: 182032464}
   - component: {fileID: 182032465}
-  - component: {fileID: 182032468}
   m_Layer: 6
   m_Name: LeftThigh
   m_TagString: Untagged
@@ -392,9 +391,9 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0.28}
-  m_ConnectedAnchor: {x: -0.030052675, y: -0.7031766}
+  m_ConnectedAnchor: {x: -0.030053139, y: -0.70317674}
   m_UseConnectedAnchor: 1
-  m_UseMotor: 0
+  m_UseMotor: 1
   m_Motor:
     m_MotorSpeed: 0
     m_MaximumMotorForce: 15
@@ -488,25 +487,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &182032468
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 182032462}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fca2008344b97c04a9a0cf2d084da61f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JointMotorController
-  jointName: 
-  joint: {fileID: 0}
-  targetAngle: 0
-  motorStrength: 20
-  motorSpeed: 10
-  maxTorque: 200
-  muscleStrength: 1
 --- !u!1 &254046280
 GameObject:
   m_ObjectHideFlags: 0
@@ -888,7 +868,6 @@ GameObject:
   - component: {fileID: 392545950}
   - component: {fileID: 392545949}
   - component: {fileID: 392545952}
-  - component: {fileID: 392545953}
   m_Layer: 6
   m_Name: RightHand
   m_TagString: Untagged
@@ -927,7 +906,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: -0.03, y: 0.14}
-  m_ConnectedAnchor: {x: 0.003999993, y: -0.24100006}
+  m_ConnectedAnchor: {x: 0.00399971, y: -0.24100006}
   m_UseConnectedAnchor: 1
   m_UseMotor: 0
   m_Motor:
@@ -1069,20 +1048,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.16477314, y: 0.14606184}
   m_EdgeRadius: 0
---- !u!114 &392545953
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 392545947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 423fa2a74fdc4e6438e73b48e85fd69d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HandController
-  target: {fileID: 0}
-  rb: {fileID: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1226,7 +1191,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: -0.12, y: -0.19}
-  m_ConnectedAnchor: {x: -0.091, y: 0.53900003}
+  m_ConnectedAnchor: {x: -0.09100008, y: 0.53900003}
   m_UseConnectedAnchor: 1
   m_UseMotor: 0
   m_Motor:
@@ -1510,7 +1475,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: -0.1, y: 0.09}
-  m_ConnectedAnchor: {x: -0.000000004656613, y: -0.4469998}
+  m_ConnectedAnchor: {x: 0, y: -0.44700003}
   m_UseConnectedAnchor: 1
   m_UseMotor: 0
   m_Motor:
@@ -1519,7 +1484,7 @@ HingeJoint2D:
   m_UseLimits: 1
   m_AngleLimits:
     m_LowerAngle: -25
-    m_UpperAngle: 30
+    m_UpperAngle: 55
 --- !u!61 &692163312
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1703,7 +1668,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: -0.03, y: 0.14}
-  m_ConnectedAnchor: {x: 0.003999993, y: -0.24100006}
+  m_ConnectedAnchor: {x: 0.00399971, y: -0.24100006}
   m_UseConnectedAnchor: 1
   m_UseMotor: 0
   m_Motor:
@@ -1854,6 +1819,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 871340096}
+  - component: {fileID: 871340097}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1870,13 +1836,65 @@ Transform:
   m_GameObject: {fileID: 871340095}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.778, z: 0}
+  m_LocalPosition: {x: -6.49, y: -0.75, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2092653301}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &871340097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871340095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ebd7703da000974b8f7cf4ac2e59fba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkCyclePdMotorDriver
+  walkCycleJson: {fileID: 4900000, guid: eb8436def19a2574a9974bc6f016641b, type: 3}
+  playbackSpeed: 1
+  animatedMode: 1
+  animatedMoveSpeed: 2
+  physicalFeetInAnimatedMode: 1
+  projectionAngleSign: -1
+  walkAction:
+    m_Name: Walk
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 2350a392-ffb8-4176-8ba9-7b48d4199359
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: e128d92d-1cd1-4990-b039-835f81c5133d
+      m_Path: <Keyboard>/d
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Walk
+      m_Flags: 0
+    m_Flags: 0
+  moveForce: 30
+  pinLeftFootToGround: 0
+  pinRightFootToGround: 0
+  proportionalGain: 1
+  derivativeGain: 0.8
+  maxMotorSpeed: 500
+  maxMotorTorque: 1000
+  clampToJointLimits: 1
+  logLimitWarnings: 1
+  uprightEnabled: 1
+  uprightWorldAngle: 0
+  uprightProportionalGain: 80
+  uprightDerivativeGain: 14
+  maxUprightAngularAcceleration: 2000
+  uprightForce: 0
+  isPlaying: 0
+  normalizedTime: 0
 --- !u!1 &907443663
 GameObject:
   m_ObjectHideFlags: 0
@@ -1890,7 +1908,6 @@ GameObject:
   - component: {fileID: 907443667}
   - component: {fileID: 907443665}
   - component: {fileID: 907443666}
-  - component: {fileID: 907443669}
   m_Layer: 6
   m_Name: RightThigh
   m_TagString: Untagged
@@ -1966,15 +1983,15 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0.28}
-  m_ConnectedAnchor: {x: -0.012, y: -0.7040001}
+  m_ConnectedAnchor: {x: -0.012000084, y: -0.704}
   m_UseConnectedAnchor: 1
-  m_UseMotor: 0
+  m_UseMotor: 1
   m_Motor:
     m_MotorSpeed: 0
     m_MaximumMotorForce: 15
   m_UseLimits: 1
   m_AngleLimits:
-    m_LowerAngle: -30
+    m_LowerAngle: -32
     m_UpperAngle: 30
 --- !u!50 &907443667
 Rigidbody2D:
@@ -2062,25 +2079,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &907443669
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 907443663}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fca2008344b97c04a9a0cf2d084da61f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JointMotorController
-  jointName: 
-  joint: {fileID: 0}
-  targetAngle: 0
-  motorStrength: 20
-  motorSpeed: 10
-  maxTorque: 200
-  muscleStrength: 1
 --- !u!1 &945727905
 GameObject:
   m_ObjectHideFlags: 0
@@ -2599,7 +2597,6 @@ GameObject:
   - component: {fileID: 1377672941}
   - component: {fileID: 1377672940}
   - component: {fileID: 1377672939}
-  - component: {fileID: 1377672943}
   m_Layer: 6
   m_Name: LeftCalf
   m_TagString: Untagged
@@ -2638,9 +2635,9 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0.41}
-  m_ConnectedAnchor: {x: -0.00400027, y: -0.35899985}
+  m_ConnectedAnchor: {x: -0.003999929, y: -0.35899985}
   m_UseConnectedAnchor: 1
-  m_UseMotor: 0
+  m_UseMotor: 1
   m_Motor:
     m_MotorSpeed: 0
     m_MaximumMotorForce: 10
@@ -2771,25 +2768,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &1377672943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1377672937}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fca2008344b97c04a9a0cf2d084da61f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JointMotorController
-  jointName: 
-  joint: {fileID: 0}
-  targetAngle: 0
-  motorStrength: 20
-  motorSpeed: 10
-  maxTorque: 200
-  muscleStrength: 1
 --- !u!1 &1550930417
 GameObject:
   m_ObjectHideFlags: 0
@@ -2949,7 +2927,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: -0.1, y: 0.09}
-  m_ConnectedAnchor: {x: -0.000013757497, y: -0.44824094}
+  m_ConnectedAnchor: {x: -0.00001353398, y: -0.44824094}
   m_UseConnectedAnchor: 1
   m_UseMotor: 0
   m_Motor:
@@ -2958,7 +2936,7 @@ HingeJoint2D:
   m_UseLimits: 1
   m_AngleLimits:
     m_LowerAngle: -25
-    m_UpperAngle: 30
+    m_UpperAngle: 48
 --- !u!61 &1649695305
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3104,7 +3082,6 @@ GameObject:
   - component: {fileID: 1775493731}
   - component: {fileID: 1775493730}
   - component: {fileID: 1775493729}
-  - component: {fileID: 1775493733}
   m_Layer: 6
   m_Name: RightCalf
   m_TagString: Untagged
@@ -3143,9 +3120,9 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0.41}
-  m_ConnectedAnchor: {x: -0.0039999997, y: -0.35899997}
+  m_ConnectedAnchor: {x: -0.004000187, y: -0.35899997}
   m_UseConnectedAnchor: 1
-  m_UseMotor: 0
+  m_UseMotor: 1
   m_Motor:
     m_MotorSpeed: 0
     m_MaximumMotorForce: 10
@@ -3276,25 +3253,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &1775493733
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1775493727}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fca2008344b97c04a9a0cf2d084da61f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JointMotorController
-  jointName: 
-  joint: {fileID: 0}
-  targetAngle: 0
-  motorStrength: 20
-  motorSpeed: 10
-  maxTorque: 200
-  muscleStrength: 1
 --- !u!1 &1857393969
 GameObject:
   m_ObjectHideFlags: 0
@@ -3308,9 +3266,8 @@ GameObject:
   - component: {fileID: 1857393973}
   - component: {fileID: 1857393972}
   - component: {fileID: 1857393971}
-  - component: {fileID: 1857393975}
   m_Layer: 6
-  m_Name: 'RightUpperArm '
+  m_Name: RightUpperArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3356,7 +3313,7 @@ HingeJoint2D:
   m_UseLimits: 1
   m_AngleLimits:
     m_LowerAngle: -105
-    m_UpperAngle: 80
+    m_UpperAngle: 150
 --- !u!70 &1857393972
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -3480,25 +3437,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &1857393975
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1857393969}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fca2008344b97c04a9a0cf2d084da61f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JointMotorController
-  jointName: 
-  joint: {fileID: 0}
-  targetAngle: 0
-  motorStrength: 20
-  motorSpeed: 10
-  maxTorque: 200
-  muscleStrength: 1
 --- !u!1 &2092653300
 GameObject:
   m_ObjectHideFlags: 0
