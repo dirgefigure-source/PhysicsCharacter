@@ -70,6 +70,12 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     [Tooltip("Continuous world +X force applied to Body while D is held.")]
     [SerializeField, Min(0f)] private float moveForce = 50f;
 
+    [Header("Stop Transition")]
+    [Tooltip("Seconds used to blend the animated limbs back to their startup joint angles after D is released.")]
+    [SerializeField, Min(0.01f)] private float returnToRestDuration = 0.3f;
+    [Tooltip("Knee bend side used while stopping. +1 bends forward for this +X-facing character.")]
+    [SerializeField] private float stoppingKneeBendSign = 1f;
+
     [Header("Foot Pin Test")]
     [Tooltip("Freezes the LeftFoot Rigidbody2D at its initial world pose.")]
     [SerializeField] private bool pinLeftFootToGround = true;
@@ -135,6 +141,15 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private bool rightIkReachWarningIssued;
     private float leftKneeBendSign;
     private float rightKneeBendSign;
+    private float walkPoseWeight;
+    private bool stoppingFootLockActive;
+    private int stoppingSupportLeg;
+    private Vector2 stoppingSupportAnkle;
+    private Vector2 defaultBodyWorldPosition;
+    private Vector2 defaultLeftAnkle;
+    private Vector2 defaultRightAnkle;
+    private Vector2 stoppingBodyStart;
+    private Vector2 stoppingBodyTarget;
     private bool initialized;
 
     private readonly struct KinematicPose
@@ -225,6 +240,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
             throw new InvalidOperationException("Player body 'RightFoot' has no Collider2D.");
         rightFootOriginalConstraints = rightFootBody.constraints;
 
+        defaultBodyWorldPosition = centralBody.position;
+        defaultLeftAnkle = GetCurrentAnkle(FindBinding("LeftFoot"));
+        defaultRightAnkle = GetCurrentAnkle(FindBinding("RightFoot"));
+
         allBodies = GetComponentsInChildren<Rigidbody2D>(true);
         originalBodyTypes = new RigidbodyType2D[allBodies.Length];
         for (int i = 0; i < allBodies.Length; i++)
@@ -241,7 +260,15 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         rightIkReachWarningIssued = false;
         leftKneeBendSign = 0f;
         rightKneeBendSign = 0f;
+        walkPoseWeight = 0f;
+        stoppingFootLockActive = false;
+        stoppingSupportLeg = 0;
+        stoppingSupportAnkle = Vector2.zero;
+        stoppingBodyStart = centralBody.position;
+        stoppingBodyTarget = centralBody.position;
         initialized = true;
+        if (animatedMode && !isPlaying)
+            BeginStopTransition();
     }
 
     private void FixedUpdate()
@@ -253,12 +280,37 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         {
             isPlaying = shouldPlay;
             SetMotorsEnabled(!animatedMode && isPlaying);
+            if (animatedMode)
+            {
+                if (isPlaying)
+                {
+                    stoppingFootLockActive = false;
+                    stoppingSupportLeg = 0;
+                    leftKneeBendSign = 0f;
+                    rightKneeBendSign = 0f;
+                    walkPoseWeight = 1f;
+                }
+                else
+                {
+                    BeginStopTransition();
+                }
+            }
         }
 
         if (animatedMode)
         {
-            if (!isPlaying) return;
-            UpdateAnimationTime();
+            if (isPlaying)
+                UpdateAnimationTime();
+            else
+            {
+                walkPoseWeight = Mathf.MoveTowards(
+                    walkPoseWeight, 0f, Time.fixedDeltaTime / returnToRestDuration);
+                if (walkPoseWeight <= 0f)
+                {
+                    elapsed = 0f;
+                    normalizedTime = 0f;
+                }
+            }
             DriveKinematicPose();
             return;
         }
@@ -307,10 +359,57 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         normalizedTime = elapsed / data.durationSeconds;
     }
 
+    private void BeginStopTransition()
+    {
+        float stopBendSign = Mathf.Approximately(stoppingKneeBendSign, 0f)
+            ? 1f
+            : Mathf.Sign(stoppingKneeBendSign);
+        leftKneeBendSign = stopBendSign;
+        rightKneeBendSign = stopBendSign;
+
+        stoppingSupportLeg = supportLeg;
+        if (stoppingSupportLeg == 0)
+            stoppingSupportLeg = leftFootPlantWeight >= rightFootPlantWeight ? -1 : 1;
+
+        Binding footBinding = FindBinding(
+            stoppingSupportLeg == -1 ? "LeftFoot" : "RightFoot");
+        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
+        if (foot == null)
+        {
+            stoppingFootLockActive = false;
+            stoppingSupportLeg = 0;
+            return;
+        }
+
+        stoppingSupportAnkle = foot.position
+                             + Rotate(footBinding.joint.anchor, foot.rotation);
+        Vector2 defaultSupportAnkle = stoppingSupportLeg == -1
+            ? defaultLeftAnkle
+            : defaultRightAnkle;
+        stoppingBodyStart = centralBody.position;
+        stoppingBodyTarget = defaultBodyWorldPosition
+                           + (stoppingSupportAnkle - defaultSupportAnkle);
+        stoppingFootLockActive = true;
+    }
+
+    private static Vector2 GetCurrentAnkle(Binding footBinding)
+    {
+        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
+        return foot.position + Rotate(footBinding.joint.anchor, foot.rotation);
+    }
+
     private void DriveKinematicPose()
     {
-        Vector2 bodyTarget = centralBody.position + Vector2.right * animatedMoveSpeed * Time.fixedDeltaTime;
-        if (supportLegIkEnabled)
+        Vector2 bodyTarget = centralBody.position;
+        if (isPlaying)
+            bodyTarget += Vector2.right * animatedMoveSpeed * Time.fixedDeltaTime;
+        else if (stoppingFootLockActive)
+        {
+            float returnProgress = 1f - walkPoseWeight;
+            float smoothProgress = returnProgress * returnProgress * (3f - 2f * returnProgress);
+            bodyTarget = Vector2.Lerp(stoppingBodyStart, stoppingBodyTarget, smoothProgress);
+        }
+        if (supportLegIkEnabled && !stoppingFootLockActive)
             bodyTarget.y = lockedBodyWorldY + fixedBodyHeightOffset;
         kinematicPoses.Clear();
         kinematicPoses[centralBody] = new KinematicPose(bodyTarget, uprightWorldAngle);
@@ -326,7 +425,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
             {
                 float source = Mathf.Lerp(
                     binding.unwrappedAngles[aIndex], binding.unwrappedAngles[bIndex], t);
-                targetJointAngle = NormalizeJointAngle(binding.offset + projectionAngleSign * source);
+                float animatedJointAngle = NormalizeJointAngle(
+                    binding.offset + projectionAngleSign * source);
+                targetJointAngle = Mathf.LerpAngle(
+                    binding.restJointAngle, animatedJointAngle, walkPoseWeight);
             }
 
             Rigidbody2D parent = binding.joint.connectedBody;
@@ -373,6 +475,14 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         Binding rightCalf = FindBinding("RightCalf");
         Binding rightFoot = FindBinding("RightFoot");
 
+        if (stoppingFootLockActive)
+        {
+            ApplyStoppedPoseIk(
+                leftThigh, leftCalf, leftFoot,
+                rightThigh, rightCalf, rightFoot);
+            return;
+        }
+
         bool hasLeft = TryGetAnkleGroundTarget(
             leftFoot, leftFootCollider, out Vector2 leftTarget, out float leftScore);
         bool hasRight = TryGetAnkleGroundTarget(
@@ -415,6 +525,80 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
             SolveLegToGround(rightThigh, rightCalf, rightFoot, rightFootCollider, rightTarget,
                 rightIkWeight, rightFootPlantWeight, rightPenetrating,
                 ref rightIkReachWarningIssued, ref rightKneeBendSign);
+        }
+    }
+
+    private void ApplyStoppedPoseIk(
+        Binding leftThigh,
+        Binding leftCalf,
+        Binding leftFoot,
+        Binding rightThigh,
+        Binding rightCalf,
+        Binding rightFoot)
+    {
+        // At the end of the transition the translated startup FK pose already
+        // places the support ankle exactly at its lock point. Leaving it
+        // untouched preserves the perfectly straight authored idle stance.
+        if (walkPoseWeight <= 0.0001f) return;
+
+        bool lockLeft = stoppingSupportLeg == -1;
+        Binding supportThigh = lockLeft ? leftThigh : rightThigh;
+        Binding supportCalf = lockLeft ? leftCalf : rightCalf;
+        Binding supportFoot = lockLeft ? leftFoot : rightFoot;
+        Collider2D supportCollider = lockLeft ? leftFootCollider : rightFootCollider;
+
+        // The support ankle remains at the release-frame world position. The
+        // hip and knee are solved around it while every other joint returns to rest.
+        if (lockLeft)
+        {
+            leftFootPlantWeight = 1f;
+            rightFootPlantWeight = 0f;
+            supportLeg = -1;
+        }
+        else
+        {
+            leftFootPlantWeight = 0f;
+            rightFootPlantWeight = 1f;
+            supportLeg = 1;
+        }
+
+        if (lockLeft)
+        {
+            SolveLegToGround(
+                supportThigh, supportCalf, supportFoot, supportCollider,
+                stoppingSupportAnkle, 1f, 1f, false,
+                ref leftIkReachWarningIssued, ref leftKneeBendSign);
+        }
+        else
+        {
+            SolveLegToGround(
+                supportThigh, supportCalf, supportFoot, supportCollider,
+                stoppingSupportAnkle, 1f, 1f, false,
+                ref rightIkReachWarningIssued, ref rightKneeBendSign);
+        }
+
+        Binding swingThigh = lockLeft ? rightThigh : leftThigh;
+        Binding swingCalf = lockLeft ? rightCalf : leftCalf;
+        Binding swingFoot = lockLeft ? rightFoot : leftFoot;
+        Collider2D swingCollider = lockLeft ? rightFootCollider : leftFootCollider;
+        bool hasGround = TryGetAnkleGroundTarget(
+            swingFoot, swingCollider, out Vector2 swingTarget, out _);
+        if (!hasGround || !preventSwingFootPenetration ||
+            !IsFootPenetratingGround(swingFoot, swingCollider)) return;
+
+        if (lockLeft)
+        {
+            SolveLegToGround(
+                swingThigh, swingCalf, swingFoot, swingCollider, swingTarget,
+                swingFootClearanceIkWeight, 0f, true,
+                ref rightIkReachWarningIssued, ref rightKneeBendSign);
+        }
+        else
+        {
+            SolveLegToGround(
+                swingThigh, swingCalf, swingFoot, swingCollider, swingTarget,
+                swingFootClearanceIkWeight, 0f, true,
+                ref leftIkReachWarningIssued, ref leftKneeBendSign);
         }
     }
 
