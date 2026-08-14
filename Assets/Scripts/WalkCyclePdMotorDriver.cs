@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 {
     [Serializable] private sealed class WalkData { public float durationSeconds; public List<Frame> frames; }
-    [Serializable] private sealed class Frame { public float normalizedTime; public List<JointSample> joints; }
+    [Serializable] private sealed class Frame { public List<JointSample> joints; }
     [Serializable] private sealed class JointSample { public string name; public float relativeAngleDeg; }
 
     [Serializable]
@@ -15,7 +15,6 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         public string bodyName;
         public string jsonJoint;
         [NonSerialized] public HingeJoint2D joint;
-        [NonSerialized] public int jsonIndex;
         [NonSerialized] public float offset;
         [NonSerialized] public float[] unwrappedAngles;
         [NonSerialized] public float restJointAngle;
@@ -76,12 +75,6 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     [Tooltip("Knee bend side used while stopping. +1 bends forward for this +X-facing character.")]
     [SerializeField] private float stoppingKneeBendSign = 1f;
 
-    [Header("Foot Pin Test")]
-    [Tooltip("Freezes the LeftFoot Rigidbody2D at its initial world pose.")]
-    [SerializeField] private bool pinLeftFootToGround = true;
-    [Tooltip("Freezes the RightFoot Rigidbody2D at its initial world pose.")]
-    [SerializeField] private bool pinRightFootToGround = true;
-
     [Header("PD Motor")]
     [SerializeField, Min(0f)] private float proportionalGain = 12f;
     [SerializeField, Min(0f)] private float derivativeGain = 0.8f;
@@ -123,6 +116,12 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private WalkData data;
     private readonly Dictionary<Rigidbody2D, KinematicPose> kinematicPoses = new();
+    private Binding leftThighBinding;
+    private Binding leftCalfBinding;
+    private Binding leftFootBinding;
+    private Binding rightThighBinding;
+    private Binding rightCalfBinding;
+    private Binding rightFootBinding;
     private Rigidbody2D centralBody;
     private Rigidbody2D leftFootBody;
     private Rigidbody2D rightFootBody;
@@ -218,13 +217,20 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                                    + binding.joint.jointAngle;
             if (!string.IsNullOrEmpty(binding.jsonJoint))
             {
-                binding.jsonIndex = FindJointIndex(data.frames[0], binding.jsonJoint);
-                binding.unwrappedAngles = UnwrapAngles(binding.jsonIndex);
+                int jsonIndex = FindJointIndex(data.frames[0], binding.jsonJoint);
+                binding.unwrappedAngles = UnwrapAngles(jsonIndex);
                 binding.offset = CalculateStaticAxisOffset(binding);
                 WarnIfLimitsCannotRepresentCycle(binding);
             }
             binding.joint.useMotor = false;
         }
+
+        leftThighBinding = FindBinding("LeftThigh");
+        leftCalfBinding = FindBinding("LeftCalf");
+        leftFootBinding = FindBinding("LeftFoot");
+        rightThighBinding = FindBinding("RightThigh");
+        rightCalfBinding = FindBinding("RightCalf");
+        rightFootBinding = FindBinding("RightFoot");
 
         Transform leftFootTransform = FindDescendant(transform, "LeftFoot");
         if (leftFootTransform == null || !leftFootTransform.TryGetComponent(out leftFootBody))
@@ -241,8 +247,8 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         rightFootOriginalConstraints = rightFootBody.constraints;
 
         defaultBodyWorldPosition = centralBody.position;
-        defaultLeftAnkle = GetCurrentAnkle(FindBinding("LeftFoot"));
-        defaultRightAnkle = GetCurrentAnkle(FindBinding("RightFoot"));
+        defaultLeftAnkle = GetCurrentAnkle(leftFootBinding);
+        defaultRightAnkle = GetCurrentAnkle(rightFootBinding);
 
         allBodies = GetComponentsInChildren<Rigidbody2D>(true);
         originalBodyTypes = new RigidbodyType2D[allBodies.Length];
@@ -321,15 +327,17 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
         centralBody.AddForce(Vector2.right * moveForce, ForceMode2D.Force);
         UpdateAnimationTime();
-        GetFramePair(normalizedTime, out Frame a, out Frame b, out float t);
+        GetFrameSample(normalizedTime, out int aIndex, out int bIndex, out float t);
 
         foreach (Binding binding in bindings)
         {
-            int aIndex = data.frames.IndexOf(a);
-            int bIndex = data.frames.IndexOf(b);
-            float source = Mathf.Lerp(
-                binding.unwrappedAngles[aIndex], binding.unwrappedAngles[bIndex], t);
-            float target = NormalizeJointAngle(binding.offset + projectionAngleSign * source);
+            float target = binding.restJointAngle;
+            if (binding.unwrappedAngles != null)
+            {
+                float source = Mathf.Lerp(
+                    binding.unwrappedAngles[aIndex], binding.unwrappedAngles[bIndex], t);
+                target = NormalizeJointAngle(binding.offset + projectionAngleSign * source);
+            }
 
             if (clampToJointLimits && binding.joint.useLimits)
             {
@@ -371,8 +379,9 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         if (stoppingSupportLeg == 0)
             stoppingSupportLeg = leftFootPlantWeight >= rightFootPlantWeight ? -1 : 1;
 
-        Binding footBinding = FindBinding(
-            stoppingSupportLeg == -1 ? "LeftFoot" : "RightFoot");
+        Binding footBinding = stoppingSupportLeg == -1
+            ? leftFootBinding
+            : rightFootBinding;
         Rigidbody2D foot = footBinding.joint.attachedRigidbody;
         if (foot == null)
         {
@@ -414,9 +423,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         kinematicPoses.Clear();
         kinematicPoses[centralBody] = new KinematicPose(bodyTarget, uprightWorldAngle);
 
-        GetFramePair(normalizedTime, out Frame a, out Frame b, out float t);
-        int aIndex = data.frames.IndexOf(a);
-        int bIndex = data.frames.IndexOf(b);
+        GetFrameSample(normalizedTime, out int aIndex, out int bIndex, out float t);
 
         foreach (Binding binding in bindings)
         {
@@ -468,12 +475,12 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private void ApplySupportLegIk()
     {
-        Binding leftThigh = FindBinding("LeftThigh");
-        Binding leftCalf = FindBinding("LeftCalf");
-        Binding leftFoot = FindBinding("LeftFoot");
-        Binding rightThigh = FindBinding("RightThigh");
-        Binding rightCalf = FindBinding("RightCalf");
-        Binding rightFoot = FindBinding("RightFoot");
+        Binding leftThigh = leftThighBinding;
+        Binding leftCalf = leftCalfBinding;
+        Binding leftFoot = leftFootBinding;
+        Binding rightThigh = rightThighBinding;
+        Binding rightCalf = rightCalfBinding;
+        Binding rightFoot = rightFootBinding;
 
         if (stoppingFootLockActive)
         {
@@ -484,9 +491,11 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         }
 
         bool hasLeft = TryGetAnkleGroundTarget(
-            leftFoot, leftFootCollider, out Vector2 leftTarget, out float leftScore);
+            leftFoot, leftFootCollider, out Vector2 leftTarget, out float leftScore,
+            out bool leftRawPenetrating);
         bool hasRight = TryGetAnkleGroundTarget(
-            rightFoot, rightFootCollider, out Vector2 rightTarget, out float rightScore);
+            rightFoot, rightFootCollider, out Vector2 rightTarget, out float rightScore,
+            out bool rightRawPenetrating);
 
         if (supportLeg == -1 && (!hasLeft ||
             (hasRight && rightScore + supportSwitchHysteresis < leftScore)))
@@ -503,8 +512,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         rightFootPlantWeight = Mathf.MoveTowards(
             rightFootPlantWeight, supportLeg == 1 ? 1f : 0f, blendStep);
 
-        bool leftPenetrating = hasLeft && preventSwingFootPenetration &&
-                               IsFootPenetratingGround(leftFoot, leftFootCollider);
+        bool leftPenetrating = hasLeft && preventSwingFootPenetration && leftRawPenetrating;
         if (hasLeft && (leftFootPlantWeight > 0f || leftPenetrating))
         {
             float leftIkWeight = leftPenetrating
@@ -515,8 +523,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                 ref leftIkReachWarningIssued, ref leftKneeBendSign);
         }
 
-        bool rightPenetrating = hasRight && preventSwingFootPenetration &&
-                                IsFootPenetratingGround(rightFoot, rightFootCollider);
+        bool rightPenetrating = hasRight && preventSwingFootPenetration && rightRawPenetrating;
         if (hasRight && (rightFootPlantWeight > 0f || rightPenetrating))
         {
             float rightIkWeight = rightPenetrating
@@ -582,9 +589,9 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         Binding swingFoot = lockLeft ? rightFoot : leftFoot;
         Collider2D swingCollider = lockLeft ? rightFootCollider : leftFootCollider;
         bool hasGround = TryGetAnkleGroundTarget(
-            swingFoot, swingCollider, out Vector2 swingTarget, out _);
-        if (!hasGround || !preventSwingFootPenetration ||
-            !IsFootPenetratingGround(swingFoot, swingCollider)) return;
+            swingFoot, swingCollider, out Vector2 swingTarget, out _,
+            out bool swingPenetrating);
+        if (!hasGround || !preventSwingFootPenetration || !swingPenetrating) return;
 
         if (lockLeft)
         {
@@ -606,10 +613,12 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         Binding footBinding,
         Collider2D footCollider,
         out Vector2 target,
-        out float score)
+        out float score,
+        out bool penetrating)
     {
         target = Vector2.zero;
         score = float.PositiveInfinity;
+        penetrating = false;
         Rigidbody2D foot = footBinding.joint.attachedRigidbody;
         if (!kinematicPoses.TryGetValue(foot, out KinematicPose footPose)) return false;
 
@@ -629,28 +638,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
             rawAnkle.x,
             hit.point.y + footGroundClearance - soleBelowAnkle);
         score = rawAnkle.y - target.y;
+        float colliderBottom = GetColliderBottomAtPose(foot, footCollider, footPose);
+        penetrating = hit.point.y + footGroundClearance - colliderBottom
+                    > swingFootPenetrationTolerance;
         return true;
-    }
-
-    private bool IsFootPenetratingGround(Binding footBinding, Collider2D footCollider)
-    {
-        Rigidbody2D foot = footBinding.joint.attachedRigidbody;
-        if (!kinematicPoses.TryGetValue(foot, out KinematicPose footPose)) return false;
-
-        Vector2 ankle = footPose.position
-                      + Rotate(footBinding.joint.anchor, footPose.rotation);
-        RaycastHit2D hit = Physics2D.Raycast(
-            ankle + Vector2.up * groundProbeHeight,
-            Vector2.down,
-            groundProbeHeight + groundProbeDistance,
-            groundLayers);
-        if (hit.collider == null) return false;
-
-        // Penetration safety uses the complete collider, not the inset visual
-        // sole used for normal support selection.
-        float soleBottom = GetColliderBottomAtPose(foot, footCollider, footPose);
-        float penetration = hit.point.y + footGroundClearance - soleBottom;
-        return penetration > swingFootPenetrationTolerance;
     }
 
     private void SolveLegToGround(
@@ -1006,13 +997,16 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         }
     }
 
-    private void GetFramePair(float normalizedTime, out Frame a, out Frame b, out float t)
+    private void GetFrameSample(
+        float normalizedTime,
+        out int aIndex,
+        out int bIndex,
+        out float t)
     {
         float framePosition = normalizedTime * (data.frames.Count - 1);
-        int index = Mathf.Min(Mathf.FloorToInt(framePosition), data.frames.Count - 2);
-        a = data.frames[index];
-        b = data.frames[index + 1];
-        t = framePosition - index;
+        aIndex = Mathf.Min(Mathf.FloorToInt(framePosition), data.frames.Count - 2);
+        bIndex = aIndex + 1;
+        t = framePosition - aIndex;
     }
 
     private static float SourceAngle(Frame frame, int index) => frame.joints[index].relativeAngleDeg;
@@ -1062,7 +1056,8 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         }
         else
         {
-            ApplyFootPins();
+            leftFootBody.constraints = leftFootOriginalConstraints;
+            rightFootBody.constraints = rightFootOriginalConstraints;
         }
     }
 
@@ -1071,25 +1066,6 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         if (allBodies == null || originalBodyTypes == null) return;
         for (int i = 0; i < allBodies.Length && i < originalBodyTypes.Length; i++)
             allBodies[i].bodyType = originalBodyTypes[i];
-    }
-
-    private void ApplyFootPins()
-    {
-        ApplyFootPin(leftFootBody, pinLeftFootToGround, leftFootOriginalConstraints);
-        ApplyFootPin(rightFootBody, pinRightFootToGround, rightFootOriginalConstraints);
-    }
-
-    private static void ApplyFootPin(
-        Rigidbody2D foot,
-        bool pinned,
-        RigidbodyConstraints2D originalConstraints)
-    {
-        if (foot == null) return;
-        foot.constraints = pinned ? RigidbodyConstraints2D.FreezeAll : originalConstraints;
-        if (!pinned) return;
-
-        foot.linearVelocity = Vector2.zero;
-        foot.angularVelocity = 0f;
     }
 
     public void Play()

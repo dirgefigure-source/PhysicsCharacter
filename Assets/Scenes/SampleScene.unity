@@ -1870,11 +1870,14 @@ MonoBehaviour:
   footPlantBlendSpeed: 10
   virtualSoleEndInset: 0.01
   supportLegIkEnabled: 1
-  fixedBodyHeightOffset: -0.15
+  fixedBodyHeightOffset: -0.07
   supportSwitchHysteresis: 0.05
   supportIkBlendSpeed: 8
   penetrationToKnee: 1
   maxPenetrationToKnee: 0.3
+  preventSwingFootPenetration: 1
+  swingFootClearanceIkWeight: 1
+  swingFootPenetrationTolerance: 0
   logUnreachableIkTargets: 1
   walkAction:
     m_Name: Walk
@@ -1894,8 +1897,8 @@ MonoBehaviour:
       m_Flags: 0
     m_Flags: 0
   moveForce: 30
-  pinLeftFootToGround: 0
-  pinRightFootToGround: 0
+  returnToRestDuration: 0.3
+  stoppingKneeBendSign: 1
   proportionalGain: 1
   derivativeGain: 0.8
   maxMotorSpeed: 500
