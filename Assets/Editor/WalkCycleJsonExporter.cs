@@ -6,20 +6,7 @@ using UnityEngine;
 
 public static class WalkCycleJsonExporter
 {
-    private const string SourcePath = "Assets/Animations/Humanoid/Y Bot@Standard Walk.fbx";
-    private const string OutputPath = "Assets/Animations/Humanoid/Y Bot@Standard Walk.walk-cycle.json";
     private const float SampleRate = 60f;
-
-    [InitializeOnLoadMethod]
-    private static void ExportOnceAfterScriptReload()
-    {
-        if (File.Exists(OutputPath)) return;
-        EditorApplication.delayCall += () =>
-        {
-            if (!EditorApplication.isCompiling && !EditorApplication.isPlayingOrWillChangePlaymode && !File.Exists(OutputPath))
-                Export();
-        };
-    }
 
     [Serializable] private sealed class ExportData
     {
@@ -89,13 +76,33 @@ public static class WalkCycleJsonExporter
         new("rightFoot", HumanBodyBones.RightFoot, HumanBodyBones.RightToes, 11),
     };
 
-    [MenuItem("Tools/Physics Character Lab/Export Walk Cycle JSON")]
-    public static void Export()
+    [MenuItem("Tools/Physics Character Lab/Export Selected FBX Motion JSON")]
+    public static void ExportSelected()
     {
-        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(SourcePath);
-        if (source == null) throw new FileNotFoundException("FBX asset not found", SourcePath);
+        string sourcePath = GetSelectedFbxPath();
+        if (string.IsNullOrEmpty(sourcePath))
+        {
+            EditorUtility.DisplayDialog(
+                "Export Motion JSON",
+                "Select one FBX animation asset in the Project window, then run this command again.",
+                "OK");
+            return;
+        }
 
-        AnimationClip clip = FindMotionClip(SourcePath);
+        Export(sourcePath);
+    }
+
+    [MenuItem("Tools/Physics Character Lab/Export Selected FBX Motion JSON", true)]
+    private static bool ValidateExportSelected() => !string.IsNullOrEmpty(GetSelectedFbxPath());
+
+    public static string Export(string sourcePath)
+    {
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+        if (source == null)
+            throw new FileNotFoundException("The selected FBX does not contain a model root.", sourcePath);
+
+        AnimationClip clip = FindMotionClip(sourcePath);
+        string outputPath = GetOutputPath(sourcePath);
         GameObject instance = UnityEngine.Object.Instantiate(source);
         instance.hideFlags = HideFlags.HideAndDontSave;
 
@@ -104,7 +111,7 @@ public static class WalkCycleJsonExporter
             int sampleCount = Mathf.Max(2, Mathf.RoundToInt(clip.length * SampleRate) + 1);
             var data = new ExportData
             {
-                sourceAsset = SourcePath,
+                sourceAsset = sourcePath,
                 clipName = clip.name,
                 durationSeconds = clip.length,
                 sampleRate = SampleRate,
@@ -156,14 +163,34 @@ public static class WalkCycleJsonExporter
                 data.frames.Add(frame);
             }
 
-            File.WriteAllText(OutputPath, JsonUtility.ToJson(data, true));
-            AssetDatabase.ImportAsset(OutputPath, ImportAssetOptions.ForceUpdate);
-            Debug.Log($"Exported {data.sampleCount} walk-cycle samples to {OutputPath}");
+            File.WriteAllText(outputPath, JsonUtility.ToJson(data, true));
+            AssetDatabase.ImportAsset(outputPath, ImportAssetOptions.ForceUpdate);
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<TextAsset>(outputPath);
+            Debug.Log(
+                $"Exported motion '{clip.name}' from '{sourcePath}' " +
+                $"({data.sampleCount} samples at {data.sampleRate:F0} Hz) to '{outputPath}'.");
+            return outputPath;
         }
         finally
         {
             UnityEngine.Object.DestroyImmediate(instance);
         }
+    }
+
+    private static string GetSelectedFbxPath()
+    {
+        string path = AssetDatabase.GetAssetPath(Selection.activeObject);
+        return !string.IsNullOrEmpty(path) &&
+               string.Equals(Path.GetExtension(path), ".fbx", StringComparison.OrdinalIgnoreCase)
+            ? path
+            : null;
+    }
+
+    private static string GetOutputPath(string sourcePath)
+    {
+        string directory = Path.GetDirectoryName(sourcePath)?.Replace('\\', '/');
+        string fileName = Path.GetFileNameWithoutExtension(sourcePath) + ".motion.json";
+        return string.IsNullOrEmpty(directory) ? fileName : directory + "/" + fileName;
     }
 
     private static AnimationClip FindMotionClip(string assetPath)
@@ -173,7 +200,8 @@ public static class WalkCycleJsonExporter
             if (asset is AnimationClip clip && !clip.name.StartsWith("__preview__", StringComparison.Ordinal))
                 return clip;
         }
-        throw new InvalidOperationException("No animation clip found in the FBX.");
+        throw new InvalidOperationException(
+            $"No animation clip was found in '{assetPath}'. Enable Import Animation in the FBX importer.");
     }
 
     private static Transform RequireBone(Transform root, HumanBodyBones bone)

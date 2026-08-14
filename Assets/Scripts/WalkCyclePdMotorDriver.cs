@@ -2,9 +2,17 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 {
+    private enum MotionState
+    {
+        Idle,
+        Walk,
+        Run
+    }
+
     [Serializable] private sealed class WalkData { public float durationSeconds; public List<Frame> frames; }
     [Serializable] private sealed class Frame { public List<JointSample> joints; }
     [Serializable] private sealed class JointSample { public string name; public float relativeAngleDeg; }
@@ -17,16 +25,28 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         [NonSerialized] public HingeJoint2D joint;
         [NonSerialized] public float offset;
         [NonSerialized] public float[] unwrappedAngles;
+        [NonSerialized] public float[] walkAngles;
+        [NonSerialized] public float[] runAngles;
         [NonSerialized] public float restJointAngle;
         [NonSerialized] public float hingeReference;
+        [NonSerialized] public float transitionStartAngle;
+        [NonSerialized] public float lastTargetAngle;
     }
 
     [Header("Animation")]
-    [SerializeField] private TextAsset walkCycleJson;
-    [SerializeField, Min(0.01f)] private float playbackSpeed = 1f;
+    [FormerlySerializedAs("walkCycleJson")]
+    [SerializeField] private TextAsset walkMotionJson;
+    [SerializeField] private TextAsset runMotionJson;
+    [FormerlySerializedAs("playbackSpeed")]
+    [SerializeField, Min(0.01f)] private float walkPlaybackSpeed = 1f;
+    [SerializeField, Min(0.01f)] private float runPlaybackSpeed = 1f;
     [Tooltip("Kinematic FK: the complete character follows the sampled animation pose.")]
     [SerializeField] private bool animatedMode = true;
-    [SerializeField, Min(0f)] private float animatedMoveSpeed = 2f;
+    [FormerlySerializedAs("animatedMoveSpeed")]
+    [SerializeField, Min(0f)] private float walkMoveSpeed = 2f;
+    [SerializeField, Min(0f)] private float runMoveSpeed = 4f;
+    [Tooltip("Seconds used to blend joint angles and speed between Walk and Run.")]
+    [SerializeField, Min(0.01f)] private float locomotionTransitionDuration = 0.15f;
     [Tooltip("The camera views the XY plane from -Z, opposite atan2's +Z viewpoint.")]
     [SerializeField] private float projectionAngleSign = -1f;
 
@@ -66,13 +86,17 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         name: "Walk",
         type: InputActionType.Button,
         binding: "<Keyboard>/d");
+    [SerializeField] private InputAction runAction = new(
+        name: "Run",
+        type: InputActionType.Button,
+        binding: "<Keyboard>/leftShift");
     [Tooltip("Continuous world +X force applied to Body while D is held.")]
     [SerializeField, Min(0f)] private float moveForce = 50f;
 
     [Header("Stop Transition")]
     [Tooltip("Seconds used to blend the animated limbs back to their startup joint angles after D is released.")]
     [SerializeField, Min(0.01f)] private float returnToRestDuration = 0.3f;
-    [Tooltip("Knee bend side used while stopping. +1 bends forward for this +X-facing character.")]
+    [Tooltip("Stable knee bend side used during starts and stops. +1 bends forward for this +X-facing character.")]
     [SerializeField] private float stoppingKneeBendSign = 1f;
 
     [Header("PD Motor")]
@@ -94,6 +118,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     [SerializeField, Min(0f)] private float uprightForce;
 
     [Header("Runtime")]
+    [SerializeField] private MotionState motionState = MotionState.Idle;
     [SerializeField] private bool isPlaying;
     [SerializeField, Range(0f, 1f)] private float normalizedTime;
 
@@ -115,6 +140,8 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     };
 
     private WalkData data;
+    private WalkData walkData;
+    private WalkData runData;
     private readonly Dictionary<Rigidbody2D, KinematicPose> kinematicPoses = new();
     private Binding leftThighBinding;
     private Binding leftCalfBinding;
@@ -132,6 +159,9 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private Rigidbody2D[] allBodies;
     private RigidbodyType2D[] originalBodyTypes;
     private float elapsed;
+    private float locomotionTransitionElapsed;
+    private float transitionStartMoveSpeed;
+    private float currentMoveSpeed;
     private float leftFootPlantWeight;
     private float rightFootPlantWeight;
     private float lockedBodyWorldY;
@@ -165,6 +195,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private void Awake()
     {
+        motionState = MotionState.Idle;
         isPlaying = false;
         Initialize();
         SetMotorsEnabled(false);
@@ -173,11 +204,14 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private void OnEnable()
     {
         walkAction.Enable();
+        runAction.Enable();
     }
 
     private void OnDisable()
     {
         walkAction.Disable();
+        runAction.Disable();
+        motionState = MotionState.Idle;
         isPlaying = false;
         if (initialized) SetMotorsEnabled(false);
         if (leftFootBody != null)
@@ -189,12 +223,9 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     public void Initialize()
     {
-        if (walkCycleJson == null)
-            throw new InvalidOperationException("Walk Cycle JSON is not assigned.");
-
-        data = JsonUtility.FromJson<WalkData>(walkCycleJson.text);
-        if (data?.frames == null || data.frames.Count < 2 || data.durationSeconds <= 0f)
-            throw new InvalidOperationException("Walk Cycle JSON has no usable frames.");
+        walkData = ParseMotionData(walkMotionJson, "Walk");
+        runData = ParseMotionData(runMotionJson, "Run");
+        data = motionState == MotionState.Run ? runData : walkData;
 
         Transform bodyTransform = FindDescendant(transform, "Body");
         if (bodyTransform == null || !bodyTransform.TryGetComponent(out centralBody))
@@ -207,6 +238,8 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                 throw new InvalidOperationException($"Player body '{binding.bodyName}' has no HingeJoint2D.");
 
             binding.restJointAngle = binding.joint.jointAngle;
+            binding.lastTargetAngle = binding.restJointAngle;
+            binding.transitionStartAngle = binding.restJointAngle;
             float childRotation = binding.joint.attachedRigidbody.rotation;
             float parentRotation = binding.joint.connectedBody != null
                 ? binding.joint.connectedBody.rotation
@@ -217,10 +250,16 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                                    + binding.joint.jointAngle;
             if (!string.IsNullOrEmpty(binding.jsonJoint))
             {
-                int jsonIndex = FindJointIndex(data.frames[0], binding.jsonJoint);
-                binding.unwrappedAngles = UnwrapAngles(jsonIndex);
+                int walkIndex = FindJointIndex(walkData.frames[0], binding.jsonJoint);
+                int runIndex = FindJointIndex(runData.frames[0], binding.jsonJoint);
+                binding.walkAngles = UnwrapAngles(walkData, walkIndex);
+                binding.runAngles = UnwrapAngles(runData, runIndex);
+                binding.unwrappedAngles = motionState == MotionState.Run
+                    ? binding.runAngles
+                    : binding.walkAngles;
                 binding.offset = CalculateStaticAxisOffset(binding);
-                WarnIfLimitsCannotRepresentCycle(binding);
+                WarnIfLimitsCannotRepresentCycle(binding, binding.walkAngles, "Walk");
+                WarnIfLimitsCannotRepresentCycle(binding, binding.runAngles, "Run");
             }
             binding.joint.useMotor = false;
         }
@@ -272,41 +311,44 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         stoppingSupportAnkle = Vector2.zero;
         stoppingBodyStart = centralBody.position;
         stoppingBodyTarget = centralBody.position;
+        locomotionTransitionElapsed = locomotionTransitionDuration;
+        transitionStartMoveSpeed = 0f;
+        currentMoveSpeed = 0f;
         initialized = true;
         if (animatedMode && !isPlaying)
             BeginStopTransition();
+    }
+
+    private static WalkData ParseMotionData(TextAsset motionJson, string label)
+    {
+        if (motionJson == null)
+            throw new InvalidOperationException($"{label} Motion JSON is not assigned.");
+
+        WalkData result = JsonUtility.FromJson<WalkData>(motionJson.text);
+        if (result?.frames == null || result.frames.Count < 2 || result.durationSeconds <= 0f)
+            throw new InvalidOperationException($"{label} Motion JSON has no usable frames.");
+        return result;
     }
 
     private void FixedUpdate()
     {
         if (!initialized) return;
 
-        bool shouldPlay = walkAction.IsPressed();
-        if (shouldPlay != isPlaying)
-        {
-            isPlaying = shouldPlay;
-            SetMotorsEnabled(!animatedMode && isPlaying);
-            if (animatedMode)
-            {
-                if (isPlaying)
-                {
-                    stoppingFootLockActive = false;
-                    stoppingSupportLeg = 0;
-                    leftKneeBendSign = 0f;
-                    rightKneeBendSign = 0f;
-                    walkPoseWeight = 1f;
-                }
-                else
-                {
-                    BeginStopTransition();
-                }
-            }
-        }
+        MotionState desiredState = !walkAction.IsPressed()
+            ? MotionState.Idle
+            : runAction.IsPressed() ? MotionState.Run : MotionState.Walk;
+        if (desiredState != motionState)
+            ChangeMotionState(desiredState);
 
         if (animatedMode)
         {
             if (isPlaying)
+            {
                 UpdateAnimationTime();
+                walkPoseWeight = Mathf.MoveTowards(
+                    walkPoseWeight, 1f, Time.fixedDeltaTime / locomotionTransitionDuration);
+                UpdateLocomotionTransition();
+            }
             else
             {
                 walkPoseWeight = Mathf.MoveTowards(
@@ -337,7 +379,9 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                 float source = Mathf.Lerp(
                     binding.unwrappedAngles[aIndex], binding.unwrappedAngles[bIndex], t);
                 target = NormalizeJointAngle(binding.offset + projectionAngleSign * source);
+                target = BlendLocomotionTarget(binding, target);
             }
+            binding.lastTargetAngle = target;
 
             if (clampToJointLimits && binding.joint.useLimits)
             {
@@ -363,21 +407,121 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private void UpdateAnimationTime()
     {
-        elapsed = Mathf.Repeat(elapsed + Time.fixedDeltaTime * playbackSpeed, data.durationSeconds);
-        normalizedTime = elapsed / data.durationSeconds;
+        normalizedTime = Mathf.Repeat(
+            normalizedTime + Time.fixedDeltaTime * GetPlaybackSpeed(motionState) /
+            data.durationSeconds,
+            1f);
+        elapsed = normalizedTime * data.durationSeconds;
     }
+
+    private void ChangeMotionState(MotionState nextState)
+    {
+        MotionState previousState = motionState;
+        motionState = nextState;
+        isPlaying = nextState != MotionState.Idle;
+        SetMotorsEnabled(!animatedMode && isPlaying);
+
+        if (nextState == MotionState.Idle)
+        {
+            currentMoveSpeed = 0f;
+            if (animatedMode) BeginStopTransition();
+            return;
+        }
+
+        foreach (Binding binding in bindings)
+        {
+            binding.transitionStartAngle = binding.lastTargetAngle;
+            binding.unwrappedAngles = nextState == MotionState.Run
+                ? binding.runAngles
+                : binding.walkAngles;
+        }
+
+        data = nextState == MotionState.Run ? runData : walkData;
+        elapsed = normalizedTime * data.durationSeconds;
+        transitionStartMoveSpeed = previousState == MotionState.Idle
+            ? 0f
+            : currentMoveSpeed;
+        locomotionTransitionElapsed = 0f;
+
+        if (animatedMode && previousState == MotionState.Idle)
+        {
+            stoppingFootLockActive = false;
+            stoppingSupportLeg = 0;
+            // The rest pose is nearly straight, so deriving the IK branch from
+            // its tiny transient knee offset is numerically unstable and can
+            // choose the backward-bending solution for the first few frames.
+            // Both source motions keep one consistent forward bend branch.
+            float startBendSign = GetPreferredKneeBendSign();
+            leftKneeBendSign = startBendSign;
+            rightKneeBendSign = startBendSign;
+        }
+    }
+
+    private void UpdateLocomotionTransition()
+    {
+        locomotionTransitionElapsed = Mathf.Min(
+            locomotionTransitionElapsed + Time.fixedDeltaTime,
+            locomotionTransitionDuration);
+        float blend = GetLocomotionBlend();
+        currentMoveSpeed = Mathf.Lerp(
+            transitionStartMoveSpeed,
+            GetMoveSpeed(motionState),
+            blend);
+    }
+
+    private float BlendLocomotionTarget(Binding binding, float target)
+    {
+        float blend = GetLocomotionBlend();
+        return blend >= 1f
+            ? target
+            : Mathf.LerpAngle(binding.transitionStartAngle, target, blend);
+    }
+
+    private float GetLocomotionBlend()
+    {
+        float linear = Mathf.Clamp01(
+            locomotionTransitionElapsed / locomotionTransitionDuration);
+        return linear * linear * (3f - 2f * linear);
+    }
+
+    private float GetPlaybackSpeed(MotionState state) =>
+        state == MotionState.Run ? runPlaybackSpeed : walkPlaybackSpeed;
+
+    private float GetMoveSpeed(MotionState state) =>
+        state == MotionState.Run ? runMoveSpeed : walkMoveSpeed;
 
     private void BeginStopTransition()
     {
-        float stopBendSign = Mathf.Approximately(stoppingKneeBendSign, 0f)
-            ? 1f
-            : Mathf.Sign(stoppingKneeBendSign);
+        float stopBendSign = GetPreferredKneeBendSign();
         leftKneeBendSign = stopBendSign;
         rightKneeBendSign = stopBendSign;
 
-        stoppingSupportLeg = supportLeg;
-        if (stoppingSupportLeg == 0)
-            stoppingSupportLeg = leftFootPlantWeight >= rightFootPlantWeight ? -1 : 1;
+        // Re-evaluate contact at the exact release pose. During a support-leg
+        // handoff, supportLeg and the plant weights can still refer to the foot
+        // that has already started lifting. Locking that airborne ankle would
+        // translate the final rest pose upward by the same amount.
+        bool hasLeftGround = TryGetAnkleGroundTarget(
+            leftFootBinding, leftFootCollider,
+            out Vector2 leftGroundAnkle, out float leftGroundScore, out _);
+        bool hasRightGround = TryGetAnkleGroundTarget(
+            rightFootBinding, rightFootCollider,
+            out Vector2 rightGroundAnkle, out float rightGroundScore, out _);
+
+        if (hasLeftGround || hasRightGround)
+        {
+            stoppingSupportLeg = hasLeftGround &&
+                (!hasRightGround || leftGroundScore <= rightGroundScore)
+                ? -1
+                : 1;
+        }
+        else
+        {
+            // Startup fallback: kinematicPoses is not populated until the first
+            // driven frame, so preserve the original selection behavior.
+            stoppingSupportLeg = supportLeg;
+            if (stoppingSupportLeg == 0)
+                stoppingSupportLeg = leftFootPlantWeight >= rightFootPlantWeight ? -1 : 1;
+        }
 
         Binding footBinding = stoppingSupportLeg == -1
             ? leftFootBinding
@@ -390,8 +534,11 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
             return;
         }
 
-        stoppingSupportAnkle = foot.position
-                             + Rotate(footBinding.joint.anchor, foot.rotation);
+        stoppingSupportAnkle = stoppingSupportLeg == -1 && hasLeftGround
+            ? leftGroundAnkle
+            : stoppingSupportLeg == 1 && hasRightGround
+                ? rightGroundAnkle
+                : foot.position + Rotate(footBinding.joint.anchor, foot.rotation);
         Vector2 defaultSupportAnkle = stoppingSupportLeg == -1
             ? defaultLeftAnkle
             : defaultRightAnkle;
@@ -400,6 +547,11 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                            + (stoppingSupportAnkle - defaultSupportAnkle);
         stoppingFootLockActive = true;
     }
+
+    private float GetPreferredKneeBendSign() =>
+        Mathf.Approximately(stoppingKneeBendSign, 0f)
+            ? 1f
+            : Mathf.Sign(stoppingKneeBendSign);
 
     private static Vector2 GetCurrentAnkle(Binding footBinding)
     {
@@ -411,7 +563,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     {
         Vector2 bodyTarget = centralBody.position;
         if (isPlaying)
-            bodyTarget += Vector2.right * animatedMoveSpeed * Time.fixedDeltaTime;
+            bodyTarget += Vector2.right * currentMoveSpeed * Time.fixedDeltaTime;
         else if (stoppingFootLockActive)
         {
             float returnProgress = 1f - walkPoseWeight;
@@ -434,9 +586,11 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                     binding.unwrappedAngles[aIndex], binding.unwrappedAngles[bIndex], t);
                 float animatedJointAngle = NormalizeJointAngle(
                     binding.offset + projectionAngleSign * source);
+                animatedJointAngle = BlendLocomotionTarget(binding, animatedJointAngle);
                 targetJointAngle = Mathf.LerpAngle(
                     binding.restJointAngle, animatedJointAngle, walkPoseWeight);
             }
+            binding.lastTargetAngle = targetJointAngle;
 
             Rigidbody2D parent = binding.joint.connectedBody;
             Rigidbody2D child = binding.joint.attachedRigidbody;
@@ -929,14 +1083,14 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         centralBody.AddTorque(torque, ForceMode2D.Force);
     }
 
-    private float[] UnwrapAngles(int jsonIndex)
+    private static float[] UnwrapAngles(WalkData motionData, int jsonIndex)
     {
-        var result = new float[data.frames.Count];
-        result[0] = SourceAngle(data.frames[0], jsonIndex);
+        var result = new float[motionData.frames.Count];
+        result[0] = SourceAngle(motionData.frames[0], jsonIndex);
         for (int i = 1; i < result.Length; i++)
         {
-            float previousWrapped = SourceAngle(data.frames[i - 1], jsonIndex);
-            float currentWrapped = SourceAngle(data.frames[i], jsonIndex);
+            float previousWrapped = SourceAngle(motionData.frames[i - 1], jsonIndex);
+            float currentWrapped = SourceAngle(motionData.frames[i], jsonIndex);
             result[i] = result[i - 1] + Mathf.DeltaAngle(previousWrapped, currentWrapped);
         }
         return result;
@@ -974,13 +1128,16 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         return Mathf.DeltaAngle(0f, parentAxisLocal - childAxisLocal - hingeReference);
     }
 
-    private void WarnIfLimitsCannotRepresentCycle(Binding binding)
+    private void WarnIfLimitsCannotRepresentCycle(
+        Binding binding,
+        float[] motionAngles,
+        string motionName)
     {
         if (!logLimitWarnings || !binding.joint.useLimits) return;
         JointAngleLimits2D limits = binding.joint.limits;
         float minTarget = float.PositiveInfinity;
         float maxTarget = float.NegativeInfinity;
-        foreach (float source in binding.unwrappedAngles)
+        foreach (float source in motionAngles)
         {
             float target = NormalizeJointAngle(binding.offset + projectionAngleSign * source);
             minTarget = Mathf.Min(minTarget, target);
@@ -990,7 +1147,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         if (minTarget < limits.min || maxTarget > limits.max)
         {
             Debug.LogWarning(
-                $"Walk retarget: '{binding.bodyName}' requires [{minTarget:F1}, {maxTarget:F1}] deg, " +
+                $"{motionName} retarget: '{binding.bodyName}' requires [{minTarget:F1}, {maxTarget:F1}] deg, " +
                 $"but its HingeJoint2D limits are [{limits.min:F1}, {limits.max:F1}] deg. " +
                 (clampToJointLimits ? "Targets outside this range will be clamped." : "Limit collision will prevent exact tracking."),
                 binding.joint);
@@ -1070,13 +1227,13 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     public void Play()
     {
-        isPlaying = true;
-        SetMotorsEnabled(!animatedMode);
+        if (!initialized) Initialize();
+        ChangeMotionState(MotionState.Walk);
     }
     public void Pause()
     {
-        isPlaying = false;
-        SetMotorsEnabled(false);
+        if (!initialized) return;
+        ChangeMotionState(MotionState.Idle);
     }
     public bool UprightEnabled
     {
@@ -1093,8 +1250,8 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     public void Restart()
     {
         elapsed = 0f;
-        if (initialized) Initialize();
-        isPlaying = true;
-        SetMotorsEnabled(!animatedMode);
+        normalizedTime = 0f;
+        if (!initialized) Initialize();
+        ChangeMotionState(MotionState.Walk);
     }
 }

@@ -1855,10 +1855,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ebd7703da000974b8f7cf4ac2e59fba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkCyclePdMotorDriver
-  walkCycleJson: {fileID: 4900000, guid: eb8436def19a2574a9974bc6f016641b, type: 3}
-  playbackSpeed: 1
+  walkMotionJson: {fileID: 4900000, guid: eb8436def19a2574a9974bc6f016641b, type: 3}
+  runMotionJson: {fileID: 4900000, guid: c414edc0f0de554429955b06cf6ff3c4, type: 3}
+  walkPlaybackSpeed: 1
+  runPlaybackSpeed: 1
   animatedMode: 1
-  animatedMoveSpeed: 2
+  walkMoveSpeed: 2
+  runMoveSpeed: 4
+  locomotionTransitionDuration: 0.15
   projectionAngleSign: -1
   groundLayers:
     serializedVersion: 2
@@ -1882,18 +1886,35 @@ MonoBehaviour:
   walkAction:
     m_Name: Walk
     m_Type: 1
-    m_ExpectedControlType: 
+    m_ExpectedControlType:
     m_Id: 2350a392-ffb8-4176-8ba9-7b48d4199359
-    m_Processors: 
-    m_Interactions: 
+    m_Processors:
+    m_Interactions:
     m_SingletonActionBindings:
-    - m_Name: 
+    - m_Name:
       m_Id: e128d92d-1cd1-4990-b039-835f81c5133d
       m_Path: <Keyboard>/d
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
+      m_Interactions:
+      m_Processors:
+      m_Groups:
       m_Action: Walk
+      m_Flags: 0
+    m_Flags: 0
+  runAction:
+    m_Name: Run
+    m_Type: 1
+    m_ExpectedControlType:
+    m_Id: 8b927049-5230-45c0-b10c-bec354864569
+    m_Processors:
+    m_Interactions:
+    m_SingletonActionBindings:
+    - m_Name:
+      m_Id: 644e5110-50c4-4cf4-9c1e-fec55fccb0cb
+      m_Path: <Keyboard>/leftShift
+      m_Interactions:
+      m_Processors:
+      m_Groups:
+      m_Action: Run
       m_Flags: 0
     m_Flags: 0
   moveForce: 30
@@ -1911,6 +1932,7 @@ MonoBehaviour:
   uprightDerivativeGain: 14
   maxUprightAngularAcceleration: 2000
   uprightForce: 0
+  motionState: 0
   isPlaying: 0
   normalizedTime: 0
 --- !u!1 &907443663
