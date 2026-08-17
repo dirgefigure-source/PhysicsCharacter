@@ -31,28 +31,34 @@
 2. Let the controller consume only the layer's sampled pose and weight.
 3. Verify multi-select limb masks and retriggered Punch playback.
 
-### Task 3: Extract rig binding and FK
+### Task 3: Extract rig binding and FK (completed)
 
 **Files:**
-- Create later: `Assets/Scripts/CharacterRig2D.cs`
-- Modify later: `Assets/Scripts/WalkCyclePdMotorDriver.cs`
+- Created: `Assets/Scripts/CharacterRig2D.cs`
+- Modified: `Assets/Scripts/WalkCyclePdMotorDriver.cs`
 
 1. Move body lookup, hinge references, static-axis offsets, and FK pose construction behind a rig API.
 2. Compare joint targets at identical normalized times before and after migration.
 
-### Task 4: Extract grounding and leg IK
+### Task 4: Extract grounding and leg IK (completed)
 
 **Files:**
-- Create later: `Assets/Scripts/LegGroundingSolver2D.cs`
-- Modify later: `Assets/Scripts/WalkCyclePdMotorDriver.cs`
+- Created: `Assets/Scripts/LegGroundingSolver2D.cs`
+- Modified: `Assets/Scripts/WalkCyclePdMotorDriver.cs`
 
 1. Move ground probes, support selection, two-bone solving, virtual soles, and stop-foot locking together.
 2. Preserve the current ordering: pose mixing, FK, grounding/IK, Rigidbody2D application.
 3. Regression-test stopping at support-leg handoff frames and starting from Idle.
 
-### Task 5: Reduce the controller to orchestration
+### Task 5: Reduce the controller to orchestration (completed)
 
-1. Keep input and high-level state transitions in a thin component.
-2. Rename only after scene serialization is stable; retain a compatibility wrapper if required.
-3. Verify no per-frame allocations are introduced in `FixedUpdate`.
+**Files:**
+- Created: `Assets/Scripts/LocomotionPlayer.cs`
+- Created: `Assets/Scripts/CharacterMotorDriver2D.cs`
+- Modified: `Assets/Scripts/WalkCyclePdMotorDriver.cs`
 
+1. Input, action triggering, serialized compatibility fields, and high-level module ordering remain in the component.
+2. Idle/Walk/Run playback and transition state now live in `LocomotionPlayer`.
+3. Dynamic Rigidbody2D mode, PD joint motors, and upright balance now live in `CharacterMotorDriver2D`.
+4. The scene-facing component retains its original name, fields, and public controls.
+5. Settings are passed as value-type snapshots; no per-frame managed collections are allocated.

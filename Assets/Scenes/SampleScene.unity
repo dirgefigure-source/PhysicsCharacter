@@ -1902,14 +1902,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WalkCyclePdMotorDriver
   walkMotionJson: {fileID: 4900000, guid: eb8436def19a2574a9974bc6f016641b, type: 3}
   runMotionJson: {fileID: 4900000, guid: c414edc0f0de554429955b06cf6ff3c4, type: 3}
-  punchLayer:
-    layerName: Punch
-    motionJson: {fileID: 4900000, guid: e4c75a7b3d6bbab4f83a9b156d802e4c, type: 3}
-    targetLimbs: 2
-    playbackSpeed: 1
-    blendInDuration: 0.08
-    blendOutDuration: 0.15
-    priority: 0
+  actionLayers:
+  - actionName: Punch
+    inputAction:
+      m_Name: Punch
+      m_Type: 1
+      m_ExpectedControlType:
+      m_Id: 9b024682-2aed-445c-b9a7-26fcf0b285cd
+      m_Processors:
+      m_Interactions:
+      m_SingletonActionBindings:
+      - m_Name:
+        m_Id: 562de940-aeff-4b27-a912-e29c15ed9fca
+        m_Path: <Mouse>/leftButton
+        m_Interactions:
+        m_Processors:
+        m_Groups:
+        m_Action: Punch
+        m_Flags: 0
+      m_Flags: 0
+    motion:
+      layerName: Punch
+      motionJson: {fileID: 4900000, guid: e4c75a7b3d6bbab4f83a9b156d802e4c, type: 3}
+      targetLimbs: 2
+      playbackSpeed: 1
+      blendInDuration: 0.08
+      blendOutDuration: 0.15
+      priority: 0
   walkPlaybackSpeed: 1
   runPlaybackSpeed: 1
   animatedMode: 1
@@ -1968,23 +1987,6 @@ MonoBehaviour:
       m_Processors: 
       m_Groups: 
       m_Action: Run
-      m_Flags: 0
-    m_Flags: 0
-  punchAction:
-    m_Name: Punch
-    m_Type: 1
-    m_ExpectedControlType: 
-    m_Id: 9b024682-2aed-445c-b9a7-26fcf0b285cd
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 562de940-aeff-4b27-a912-e29c15ed9fca
-      m_Path: <Mouse>/leftButton
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Punch
       m_Flags: 0
     m_Flags: 0
   moveForce: 30
