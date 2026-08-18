@@ -100,6 +100,29 @@ public sealed class CharacterRig2D
         poses[child] = new Pose2D(parentAnchor - rotatedChildAnchor, childRotation);
     }
 
+    /// <summary>
+    /// Reflects the completed FK pose across the central body's local vertical
+    /// axis. SpriteRenderer.flipX supplies the matching reflection of the
+    /// artwork itself; this method mirrors the rigidbody pivots and rotations.
+    /// </summary>
+    public void MirrorPoseAcrossBodyVertical()
+    {
+        if (!poses.TryGetValue(CentralBody, out Pose2D bodyPose)) return;
+
+        Vector2 verticalAxis = Rotate(Vector2.up, bodyPose.rotation);
+        foreach (Rigidbody2D body in AllBodies)
+        {
+            if (!poses.TryGetValue(body, out Pose2D pose)) continue;
+
+            Vector2 offset = pose.position - bodyPose.position;
+            Vector2 mirroredOffset = 2f * Vector2.Dot(offset, verticalAxis)
+                                   * verticalAxis - offset;
+            poses[body] = new Pose2D(
+                bodyPose.position + mirroredOffset,
+                2f * bodyPose.rotation - pose.rotation);
+        }
+    }
+
     private static JointBinding[] CreateBindings() => new JointBinding[]
     {
         new() { bodyName = "Head" },

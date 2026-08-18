@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "planetId": "prototype-planet-01",
+  "entities": [
+    {
+      "instanceId": "test-crate-01",
+      "typeId": "cargo_crate",
+      "position": {
+        "x": 8,
+        "y": -2.5,
+        "z": 0.0
+      },
+      "rotation": 0.0,
+      "active": true
+    }
+  ]
+}

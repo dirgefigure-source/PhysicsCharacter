@@ -68,19 +68,24 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     [SerializeField] private bool logUnreachableIkTargets = true;
 
     [Header("Input System")]
-    [SerializeField] private InputAction walkAction = new(
-        name: "Walk",
+    [FormerlySerializedAs("walkAction")]
+    [SerializeField] private InputAction moveRightAction = new(
+        name: "Move Right",
         type: InputActionType.Button,
         binding: "<Keyboard>/d");
+    [SerializeField] private InputAction moveLeftAction = new(
+        name: "Move Left",
+        type: InputActionType.Button,
+        binding: "<Keyboard>/a");
     [SerializeField] private InputAction runAction = new(
         name: "Run",
         type: InputActionType.Button,
         binding: "<Keyboard>/leftShift");
-    [Tooltip("Continuous world +X force applied to Body while D is held.")]
+    [Tooltip("Continuous horizontal force applied to Body while A or D is held.")]
     [SerializeField, Min(0f)] private float moveForce = 50f;
 
     [Header("Stop Transition")]
-    [Tooltip("Seconds used to blend the animated limbs back to their startup joint angles after D is released.")]
+    [Tooltip("Seconds used to blend the animated limbs back to their startup joint angles after movement input is released.")]
     [SerializeField, Min(0.01f)] private float returnToRestDuration = 0.3f;
     [Tooltip("Stable knee bend side used during starts and stops. +1 bends forward for this +X-facing character.")]
     [SerializeField] private float stoppingKneeBendSign = 1f;
@@ -107,11 +112,13 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     [SerializeField] private MotionState motionState = MotionState.Idle;
     [SerializeField] private bool isPlaying;
     [SerializeField, Range(0f, 1f)] private float normalizedTime;
+    [SerializeField, HideInInspector] private int facingDirection = 1;
 
     private CharacterRig2D rig;
     private LegGroundingSolver2D groundingSolver;
     private LocomotionPlayer locomotionPlayer;
     private CharacterMotorDriver2D motorDriver;
+    private CylindricalRigidbodyGroup2D cylindricalWrap;
     private Binding[] bindings => rig.Bindings;
     private Dictionary<Rigidbody2D, KinematicPose> kinematicPoses => rig.Poses;
     private MotionJsonClip walkClip;
@@ -120,6 +127,21 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
     private ActionMotionRuntime[] actionRuntimes;
     private long nextActionSequence;
     private bool initialized;
+    private FacingRendererState[] facingRenderers;
+
+    private sealed class FacingRendererState
+    {
+        public SpriteRenderer renderer;
+        public bool originalFlipX;
+        public int originalSortingOrder;
+        public SpriteRenderer oppositeRenderer;
+        public int oppositeOriginalSortingOrder;
+        public bool mirrorLocalTransform;
+        public Vector3 originalLocalPosition;
+        public Quaternion originalLocalRotation;
+    }
+
+    public int FacingDirection => facingDirection < 0 ? -1 : 1;
 
     private void Awake()
     {
@@ -131,14 +153,16 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
     private void OnEnable()
     {
-        walkAction.Enable();
+        moveRightAction.Enable();
+        moveLeftAction.Enable();
         runAction.Enable();
         SetActionInputsEnabled(true);
     }
 
     private void OnDisable()
     {
-        walkAction.Disable();
+        moveRightAction.Disable();
+        moveLeftAction.Disable();
         runAction.Disable();
         SetActionInputsEnabled(false);
         ResetActionLayers();
@@ -215,7 +239,10 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         locomotionPlayer.Reset(locomotionTransitionDuration);
 
         rig = new CharacterRig2D(transform);
+        InitializeFacingPresentation();
+        SetFacingDirection(facingDirection);
         centralBody = rig.CentralBody;
+        TryGetComponent(out cylindricalWrap);
         motorDriver = new CharacterMotorDriver2D(rig);
         groundingSolver = new LegGroundingSolver2D(rig);
         groundingSolver.Configure(CreateGroundingSettings());
@@ -249,7 +276,11 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
 
         UpdateActionLayers();
 
-        MotionState desiredState = !walkAction.IsPressed()
+        int moveDirection = GetMoveDirection();
+        if (moveDirection != 0)
+            SetFacingDirection(moveDirection);
+
+        MotionState desiredState = moveDirection == 0
             ? MotionState.Idle
             : runAction.IsPressed() ? MotionState.Run : MotionState.Walk;
         if (desiredState != motionState)
@@ -269,7 +300,9 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         motorDriver.ApplyUpright(CreateUprightSettings());
 
         if (motionState == MotionState.Walk || motionState == MotionState.Run)
-            centralBody.AddForce(Vector2.right * moveForce, ForceMode2D.Force);
+            centralBody.AddForce(
+                Vector2.right * (moveForce * facingDirection),
+                ForceMode2D.Force);
         locomotionPlayer.TickDynamic(
             Time.fixedDeltaTime, CreateLocomotionSettings());
         SyncLocomotionRuntimeFields();
@@ -282,6 +315,7 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
                 binding, locomotionSettings, false);
             target = ApplyLimbMotionLayer(binding, target);
             binding.lastTargetAngle = target;
+            target = ApplyFacingToDynamicJointAngle(binding, target);
             motorDriver.DriveJoint(binding, target, motorSettings);
         }
     }
@@ -432,10 +466,13 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         groundingSolver.Configure(CreateGroundingSettings());
         Vector2 bodyTarget = centralBody.position;
         if (isPlaying)
-            bodyTarget += Vector2.right * locomotionPlayer.CurrentMoveSpeed * Time.fixedDeltaTime;
+            bodyTarget += Vector2.right * (
+                facingDirection * locomotionPlayer.CurrentMoveSpeed * Time.fixedDeltaTime);
         else if (groundingSolver.StoppingFootLockActive)
             bodyTarget = groundingSolver.EvaluateStoppingBodyPosition(
                 locomotionPlayer.PoseWeight);
+        if (cylindricalWrap != null)
+            bodyTarget = cylindricalWrap.WrapKinematicTarget(bodyTarget);
         groundingSolver.ConstrainBodyHeight(ref bodyTarget);
         rig.BeginPose(bodyTarget, uprightWorldAngle);
 
@@ -451,12 +488,117 @@ public sealed class WalkCyclePdMotorDriver : MonoBehaviour
         }
 
         groundingSolver.Apply(locomotionPlayer.PoseWeight, Time.fixedDeltaTime);
+        if (facingDirection < 0)
+            rig.MirrorPoseAcrossBodyVertical();
 
+        bool teleportPose = cylindricalWrap != null &&
+            cylindricalWrap.ConsumeKinematicTeleport();
         foreach (KeyValuePair<Rigidbody2D, KinematicPose> item in kinematicPoses)
         {
-            item.Key.MovePosition(item.Value.position);
-            item.Key.MoveRotation(item.Value.rotation);
+            if (teleportPose)
+            {
+                item.Key.position = item.Value.position;
+                item.Key.rotation = item.Value.rotation;
+                item.Key.linearVelocity = Vector2.zero;
+                item.Key.angularVelocity = 0f;
+            }
+            else
+            {
+                item.Key.MovePosition(item.Value.position);
+                item.Key.MoveRotation(item.Value.rotation);
+            }
         }
+        if (teleportPose)
+            Physics2D.SyncTransforms();
+    }
+
+    private int GetMoveDirection()
+    {
+        bool left = moveLeftAction.IsPressed();
+        bool right = moveRightAction.IsPressed();
+        if (left == right) return 0;
+        return right ? 1 : -1;
+    }
+
+    private float ApplyFacingToDynamicJointAngle(Binding binding, float targetAngle)
+    {
+        if (facingDirection >= 0) return targetAngle;
+        float restDelta = Mathf.DeltaAngle(binding.restJointAngle, targetAngle);
+        return binding.restJointAngle - restDelta;
+    }
+
+    private void InitializeFacingPresentation()
+    {
+        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        Dictionary<string, SpriteRenderer> byName = new();
+        foreach (SpriteRenderer renderer in renderers)
+            byName.TryAdd(renderer.gameObject.name.Trim(), renderer);
+
+        facingRenderers = new FacingRendererState[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            string objectName = renderer.gameObject.name.Trim();
+            string oppositeName = objectName.StartsWith("Left", System.StringComparison.Ordinal)
+                ? "Right" + objectName.Substring(4)
+                : objectName.StartsWith("Right", System.StringComparison.Ordinal)
+                    ? "Left" + objectName.Substring(5)
+                    : null;
+
+            SpriteRenderer opposite = null;
+            if (oppositeName != null)
+                byName.TryGetValue(oppositeName, out opposite);
+
+            facingRenderers[i] = new FacingRendererState
+            {
+                renderer = renderer,
+                originalFlipX = renderer.flipX,
+                originalSortingOrder = renderer.sortingOrder,
+                oppositeRenderer = opposite,
+                oppositeOriginalSortingOrder = opposite != null
+                    ? opposite.sortingOrder
+                    : renderer.sortingOrder,
+                mirrorLocalTransform = renderer.GetComponent<Rigidbody2D>() == null &&
+                    renderer.transform.parent != null &&
+                    renderer.transform.parent.TryGetComponent(out Rigidbody2D _),
+                originalLocalPosition = renderer.transform.localPosition,
+                originalLocalRotation = renderer.transform.localRotation
+            };
+        }
+    }
+
+    private void SetFacingDirection(int direction)
+    {
+        int nextDirection = direction < 0 ? -1 : 1;
+        bool changed = facingDirection != nextDirection;
+        facingDirection = nextDirection;
+        if (facingRenderers == null) return;
+
+        bool faceLeft = facingDirection < 0;
+        foreach (FacingRendererState state in facingRenderers)
+        {
+            if (state.renderer == null) continue;
+            state.renderer.flipX = faceLeft
+                ? !state.originalFlipX
+                : state.originalFlipX;
+            state.renderer.sortingOrder = faceLeft && state.oppositeRenderer != null
+                ? state.oppositeOriginalSortingOrder
+                : state.originalSortingOrder;
+
+            if (state.mirrorLocalTransform)
+            {
+                Vector3 localPosition = state.originalLocalPosition;
+                if (faceLeft) localPosition.x = -localPosition.x;
+                state.renderer.transform.localPosition = localPosition;
+
+                Vector3 localEuler = state.originalLocalRotation.eulerAngles;
+                if (faceLeft) localEuler.z = -localEuler.z;
+                state.renderer.transform.localRotation = Quaternion.Euler(localEuler);
+            }
+        }
+
+        if (changed && groundingSolver != null && isPlaying)
+            groundingSolver.BeginLocomotion(GetPreferredKneeBendSign());
     }
 
     private void WarnIfLimitsCannotRepresentCycle(
